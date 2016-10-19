@@ -6,3 +6,5 @@ progs/
 sounds/
 progs.dat
 progs.lno
+*.cfg
+*.wad
