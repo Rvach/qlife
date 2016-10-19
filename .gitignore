@@ -1,0 +1,6 @@
+gfx/
+maps/*.bsp
+ql_src/ftegcc.log
+saves/
+progs/
+sounds/
