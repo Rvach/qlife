@@ -720,7 +720,8 @@ void () trigger_camera = {
 
 
 
-*/
+*/
+
 // Do *some* of the half-life render stuff.
 void () HalfLife_DoRender =
 {

@@ -38,6 +38,7 @@
 #include "combat.qc"
 #include "items.qc"
 #include "proj.qc"
+#include "weapons_attacks.qc"
 #include "weapons.qc"
 #include "world.qc"
 #include "client.qc"

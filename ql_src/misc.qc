@@ -308,7 +308,7 @@ void() spikeshooter_use =
 	{
 		sound (self, CHAN_VOICE, "enforcer/enfire.wav", 1, ATTN_NORM);
 		PRJ_FireProjectile(self,
-			"progs/laser.mdl",
+			"progs/laser.MDL",
 			self.origin,
 			self.movedir * 600,
 			PE_LASER,

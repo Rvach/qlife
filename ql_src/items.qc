@@ -665,8 +665,8 @@ void() weapon_supershotgun =
 {
 	if (deathmatch <= 3)
 	{
-		precache_model ("progs/g_shot.mdl");
-		setmodel (self, "progs/g_shot.mdl");
+		precache_model ("progs/WORLD/wrld_shotgun.MDL");
+		setmodel (self, "progs/WORLD/wrld_shotgun.MDL");
 		self.weapon = IT_SUPER_SHOTGUN;
 		self.touch = weapon_touch;
 		setsize (self, '-16 -16 0', '16 16 56');
@@ -683,8 +683,8 @@ void() weapon_nailgun =
 {
 	if (deathmatch <= 3)
 	{
-		precache_model ("progs/g_nail.mdl");
-		setmodel (self, "progs/g_nail.mdl");
+		precache_model ("progs/WORLD/wrld_mp5.MDL");
+		setmodel (self, "progs/WORLD/wrld_mp5.MDL");
 		self.weapon = IT_NAILGUN;
 		self.touch = weapon_touch;
 		setsize (self, '-16 -16 0', '16 16 56');
@@ -701,8 +701,8 @@ void() weapon_supernailgun =
 {
 	if (deathmatch <= 3)
 	{
-		precache_model ("progs/g_nail2.mdl");
-		setmodel (self, "progs/g_nail2.mdl");
+		precache_model ("progs/WORLD/wrld_mp5.MDL");
+		setmodel (self, "progs/WORLD/wrld_mp5.MDL");
 		self.weapon = IT_SUPER_NAILGUN;
 		self.touch = weapon_touch;
 		setsize (self, '-16 -16 0', '16 16 56');
@@ -719,8 +719,8 @@ void() weapon_grenadelauncher =
 {
 	if (deathmatch <= 3)
 	{
-		precache_model ("progs/g_rock.mdl");
-		setmodel (self, "progs/g_rock.mdl");
+		precache_model ("progs/WORLD/wrld_mp5.MDL");
+		setmodel (self, "progs/WORLD/wrld_mp5.MDL");
 		self.weapon = IT_GRENADE_LAUNCHER;
 		self.touch = weapon_touch;
 		setsize (self, '-16 -16 0', '16 16 56');
@@ -737,8 +737,8 @@ void() weapon_rocketlauncher =
 {
 	if (deathmatch <= 3)
 	{
-		precache_model ("progs/g_rock2.mdl");
-		setmodel (self, "progs/g_rock2.mdl");
+		precache_model ("progs/WORLD/wrld_rpg.MDL");
+		setmodel (self, "progs/WORLD/wrld_rpg.MDL");
 		self.weapon = IT_ROCKET_LAUNCHER;
 		self.touch = weapon_touch;
 		setsize (self, '-16 -16 0', '16 16 56');
@@ -756,8 +756,8 @@ void() weapon_lightning =
 {
 	if (deathmatch <= 3)
 	{
-		precache_model ("progs/g_light.mdl");
-		setmodel (self, "progs/g_light.mdl");
+		precache_model ("progs/WORLD/wrld_egon.MDL");
+		setmodel (self, "progs/WORLD/wrld_egon.MDL");
 		self.weapon = IT_LIGHTNING;
 		self.touch = weapon_touch;
 		setsize (self, '-16 -16 0', '16 16 56');

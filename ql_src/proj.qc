@@ -45,6 +45,12 @@ float() _PRJ_Stop =
 	return 1; // keep the entity alive
 };
 
+// functions used only by this QC file
+float() _PRJ_TouchNExplode =
+{
+    return 0; // explode
+};
+
 void() _PRJ_Touch =
 {
 	local entity ignore;
@@ -167,6 +173,22 @@ void() PRJ_SetTossedProjectile =
 	newmis.proj_touch = _PRJ_Stop;
 	newmis.movetype = MOVETYPE_BOUNCE;
 	newmis.avelocity = '3000 1000 2000';
+};
+
+// set stiky projectile
+void() PRJ_SetStikyProjectile =
+{
+	newmis.proj_touch = _PRJ_Stop;
+	newmis.movetype = MOVETYPE_BOUNCE;
+	newmis.avelocity = '300 300 300';
+};
+
+// set grenade exploding on any surface touch
+void() PRJ_SetTouchNExplodeProjectile =
+{
+	newmis.proj_touch = _PRJ_TouchNExplode;
+	newmis.movetype = MOVETYPE_BOUNCE;
+	newmis.avelocity = '300 300 300';
 };
 
 // set radius damage function

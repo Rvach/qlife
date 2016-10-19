@@ -30,26 +30,6 @@ void(entity inflictor, entity attacker, float damage, float radius, entity ignor
 void(vector org, float damage) SpawnBlood;
 void() SuperDamageSound;
 
-
-// called by worldspawn
-void() W_Precache =
-{
-	precache_sound ("weapons/r_exp3.wav");  // new rocket explosion
-	precache_sound ("weapons/rocket1i.wav");        // spike gun
-	precache_sound ("weapons/sgun1.wav");
-	precache_sound ("weapons/guncock.wav"); // player shotgun
-	precache_sound ("weapons/ric1.wav");    // ricochet (used in c code)
-	precache_sound ("weapons/ric2.wav");    // ricochet (used in c code)
-	precache_sound ("weapons/ric3.wav");    // ricochet (used in c code)
-	precache_sound ("weapons/spike2.wav");  // super spikes
-	precache_sound ("weapons/tink1.wav");   // spikes tink (used in c code)
-	precache_sound ("weapons/grenade.wav"); // grenade launcher
-	precache_sound ("weapons/bounce.wav");          // grenade bounce
-	precache_sound ("weapons/shotgn2.wav"); // super shotgun
-};
-
-#define crandom() (2*(random()-0.5))
-
 /*
 Ammo update functions
 */
@@ -81,591 +61,12 @@ void(entity ent) W_UpdateAmmoCounts =
 	ent.ammo_cells = ent.ammo_cells_real;
 };
 
-/*
-================
-W_FireAxe
-================
-*/
-void() W_FireAxe =
-{
-	local   vector  source;
-	local   vector  org;
-
-	makevectors (self.v_angle);
-	source = self.origin + '0 0 16';
-	traceline (source, source + v_forward*64, FALSE, self);
-	if (trace_fraction == 1.0)
-		return;
-	
-	org = trace_endpos - v_forward*4;
-
-	if (trace_ent.takedamage)
-	{
-		SpawnBlood (org, 20);
-		if (deathmatch > 3)
-			T_Damage (trace_ent, self, self, 75, MOD_AXE);
-		else
-			T_Damage (trace_ent, self, self, 20, MOD_AXE);
-	}
-	else
-	{       // hit wall
-		sound (self, CHAN_WEAPON, "player/axhit2.wav", 1, ATTN_NORM);
-
-		TE_gunshot(org);
-	}
-};
 
 
-//============================================================================
-
-/*
-================
-SpawnMeatSpray
-================
-*/
-void(vector org, vector vel) SpawnMeatSpray =
-{
-	local   entity missile;
-
-	missile = spawn ();
-	missile.owner = self;
-	missile.movetype = MOVETYPE_BOUNCE;
-	missile.solid = SOLID_NOT;
-
-	makevectors (self.angles);
-
-	missile.velocity = vel;
-	missile.velocity_z = missile.velocity_z + 250 + 50*random();
-
-	missile.avelocity = '3000 1000 2000';
-	
-// set missile duration
-	missile.nextthink = time + 1;
-	missile.think = SUB_Remove;
-
-	setmodel (missile, "progs/zom_gib.mdl");
-	setsize (missile, '0 0 0', '0 0 0');            
-	setorigin (missile, org);
-};
-
-/*
-==============================================================================
-
-MULTI-DAMAGE
-
-Collects multiple small damages into a single damage
-
-==============================================================================
-*/
-
-entity  multi_ent;
-float   multi_damage;
-INTEGER multi_mod;
-
-vector  blood_org;
-float   blood_count;
-
-vector  puff_org;
-float   puff_count;
-
-void() ClearMultiDamage =
-{
-	multi_ent = world;
-	multi_damage = 0;
-	blood_count = 0;
-	puff_count = 0;
-	multi_mod = MOD_NONE;
-};
-
-void() ApplyMultiDamage =
-{
-	if (!multi_ent)
-		return;
-	T_Damage (multi_ent, self, self, multi_damage, multi_mod);
-};
-
-void(entity hit, float damage, INTEGER mod) AddMultiDamage =
-{
-	if (!hit)
-		return;
-	
-	if (hit != multi_ent || mod != multi_mod)
-	{
-		ApplyMultiDamage ();
-		multi_damage = damage;
-		multi_ent = hit;
-	}
-	else
-		multi_damage = multi_damage + damage;
-};
-
-void() Multi_Finish =
-{
-	if (puff_count)
-		TE_gunshot(puff_org);
-
-	if (blood_count)
-		SpawnBlood(blood_org, blood_count);
-};
-
-/*
-==============================================================================
-BULLETS
-==============================================================================
-*/
-
-/*
-================
-TraceAttack
-================
-*/
-void(float damage, vector dir, INTEGER mod) TraceAttack =
-{
-	local   vector  vel, org;
-	
-	vel = normalize(dir + v_up*crandom() + v_right*crandom());
-	vel = vel + 2*trace_plane_normal;
-	vel = vel * 200;
-
-	org = trace_endpos - dir*4;
-
-	if (trace_ent.takedamage)
-	{
-		blood_count = blood_count + 1;
-		blood_org = org;
-		AddMultiDamage (trace_ent, damage, mod);
-	}
-	else
-	{
-		puff_count = puff_count + 1;
-	}
-};
-
-/*
-================
-FireBullets
-
-Used by shotgun, super shotgun, and enemy soldier firing
-Go to the trouble of combining multiple pellets into a single damage call.
-================
-*/
-void(float shotcount, vector dir, vector spread, INTEGER mod) FireBullets =
-{
-	local   vector direction;
-	local   vector  src;
-	
-	makevectors(self.v_angle);
-
-	src = self.origin + v_forward*10;
-	src_z = self.absmin_z + self.size_z * 0.7;
-
-	ClearMultiDamage ();
-
-	traceline (src, src + dir*2048, FALSE, self);
-	puff_org = trace_endpos - dir*4;
-
-	while (shotcount > 0)
-	{
-		direction = dir + crandom()*spread_x*v_right + crandom()*spread_y*v_up;
-		traceline (src, src + direction*2048, FALSE, self);
-		if (trace_fraction != 1.0)
-			TraceAttack (4, direction, mod);
-
-		shotcount = shotcount - 1;
-	}
-	ApplyMultiDamage ();
-	Multi_Finish ();
-};
-
-/*
-================
-W_FireShotgun
-================
-*/
-void() W_FireShotgun =
-{
-	local vector dir;
-
-	sound (self, CHAN_WEAPON, "weapons/guncock.wav", 1, ATTN_NORM); 
-
-	VK_smallkick(self);
-	
-	if (deathmatch != 4)
-	{
-		self.ammo_shells_real -= 1;
-		W_UpdateAmmoCounts(self);
-	}
-
-	dir = aim (self, 100000);
-	FireBullets (6, dir, '0.04 0.04 0', MOD_SHOTGUN);
-};
 
 
 /*
-================
-W_FireSuperShotgun
-================
-*/
-void() W_FireSuperShotgun =
-{
-	local vector dir;
 
-	if (self.currentammo == 1)
-	{
-		W_FireShotgun ();
-		return;
-	}
-		
-	sound (self ,CHAN_WEAPON, "weapons/shotgn2.wav", 1, ATTN_NORM); 
-
-	VK_bigkick(self);
-	
-	if (deathmatch != 4)
-	{
-		self.ammo_shells_real -= 2;
-		W_UpdateAmmoCounts(self);
-	}
-
-	dir = aim (self, 100000);
-	FireBullets (14, dir, '0.14 0.08 0', MOD_SUPERSHOTGUN);
-};
-
-
-/*
-==============================================================================
-
-ROCKETS
-
-==============================================================================
-*/
-
-/*
-================
-W_FireRocket
-================
-*/
-void() W_FireRocket =
-{
-	if (deathmatch != 4)
-	{
-		self.ammo_rockets_real -= 1;
-		W_UpdateAmmoCounts(self);
-	}
-	
-	sound (self, CHAN_WEAPON, "weapons/sgun1.wav", 1, ATTN_NORM);
-
-	VK_smallkick(self);
-	PRJ_FireProjectile(self, 
-		"progs/missile.mdl", 
-		self.origin + v_forward*8 + '0 0 16', 
-		aim(self, 1000) * 1000,
-		PE_EXPLOSION, 
-		100+random()*20, 
-		MOD_ROCKET, 
-		5);
-	PRJ_SetRadiusDamage(120, 160, MOD_ROCKETRADIUS);
-};
-
-/*
-===============================================================================
-LIGHTNING
-===============================================================================
-*/
-
-void(entity from, float damage, INTEGER lmod) LightningHit =
-{
-	TE_lightningblood(trace_endpos);
-
-	T_Damage (trace_ent, from, from, damage, lmod);
-};
-
-/*
-=================
-LightningDamage
-=================
-*/
-void(vector p1, vector p2, entity from, float damage, INTEGER lmod) LightningDamage =
-{
-	local entity            e1, e2;
-	local vector            f;
-	
-	f = p2 - p1;
-	f = normalize(f);
-	f_x = 0 - f_y;
-	f_y = f_x;
-	f_z = 0;
-	f = f*16;
-
-	e1 = e2 = world;
-
-	traceline (p1, p2, FALSE, self);
-
-	if (trace_ent.takedamage)
-		LightningHit (from, damage, lmod);
-	e1 = trace_ent;
-
-	traceline (p1 + f, p2 + f, FALSE, self);
-	if (trace_ent != e1 && trace_ent.takedamage)
-		LightningHit (from, damage, lmod);
-	e2 = trace_ent;
-
-	traceline (p1 - f, p2 - f, FALSE, self);
-	if (trace_ent != e1 && trace_ent != e2 && trace_ent.takedamage)
-		LightningHit (from, damage, lmod);
-};
-
-
-void() W_FireLightning =
-{
-	local   vector          org;
-	local   float           cells;
-	local   INTEGER		expmod;
-
-	if (self.ammo_cells_real < 1)
-	{
-		W_WeaponSwitch (W_BestWeapon ());
-		return;
-	}
-
-// explode if under water
-	if (self.waterlevel > 1)
-	{
-		if (deathmatch > 3)
-		{
-			if (random() <= 0.5)
-			{
-				T_Damage (self, self, self.owner, 4000, MOD_SELFWATER);
-				return;
-			}
-		}
-
-		cells = self.ammo_cells_real;
-		self.ammo_cells_real = 0;
-		W_WeaponSwitch (W_BestWeapon ());
-		expmod = MOD_SHAFTWATER;
-		if (self.watertype == CONTENT_SLIME)
-			expmod = MOD_SHAFTSLIME;
-		else if (self.watertype == CONTENT_LAVA)
-			expmod = MOD_SHAFTLAVA;
-		T_RadiusDamage (self, self, 35*cells, 40+35*cells, world, expmod);
-		return;
-	}
-
-	if (self.lightning_sound < time)
-	{
-		sound (self, CHAN_WEAPON, "weapons/lhit.wav", 1, ATTN_NORM);
-		self.lightning_sound = time + 0.6;
-	}
-	VK_smallkick(self);
-
-	if (deathmatch != 4)
-	{
-		self.ammo_cells_real -= 1;
-		W_UpdateAmmoCounts(self);
-	}
-
-	org = self.origin + '0 0 16';
-	
-	traceline (org, org + v_forward*600, TRUE, self);
-
-	TE_lightning2(self, org, trace_endpos);
-
-	LightningDamage (self.origin, trace_endpos + v_forward*4, self, 30, MOD_SHAFT);
-};
-
-/*
-================
-W_FireGrenade
-================
-*/
-void() W_FireGrenade =
-{
-	local vector vel;
-
-	if (deathmatch != 4)
-	{
-		self.ammo_rockets_real -= 1;
-		W_UpdateAmmoCounts(self);
-	}
-	
-	sound (self, CHAN_WEAPON, "weapons/grenade.wav", 1, ATTN_NORM);
-
-	if (self.v_angle_x)
-		vel = v_forward*600 + v_up * 200 + crandom()*v_right*10 + crandom()*v_up*10;
-	else
-	{
-		vel = aim(self, 10000) * 600;
-		vel_z = 200;
-	}
-
-	VK_smallkick(self);
-	PRJ_FireProjectile(self, "progs/grenade.mdl", self.origin, vel, PE_EXPLOSIONGROUND, 0, 0, 2.5);
-	PRJ_SetRadiusDamage(120, 160, MOD_GRENADE);
-	PRJ_SetBouncyProjectile();
-
-	if (deathmatch == 4)
-	{
-		self.attack_finished = time + 1.1;
-		T_Damage (self, self, self.owner, 10, MOD_GRENADE);
-	}
-};
-
-
-//=============================================================================
-void(float ox) W_FireSpikes =
-{
-	if (self.ammo_nails_real < 1)
-	{
-		W_WeaponSwitch (W_BestWeapon ());
-		return;
-	}
-
-	sound (self, CHAN_WEAPON, "weapons/rocket1i.wav", 1, ATTN_NORM);
-	if (deathmatch != 4)
-	{
-		self.ammo_nails_real -= 1;
-		W_UpdateAmmoCounts(self);
-	}
-
-	VK_smallkick(self);
-	PRJ_FireProjectile(self,
-		"progs/spike.mdl",
-		self.origin + '0 0 16' + v_right*ox,
-		aim(self, 1000) * 1000,
-		PE_SPIKE,
-		9,
-		MOD_SPIKE,
-		6);
-};
-
-void() W_FireSuperSpikes =
-{
-	if (self.ammo_nails_real < 2)
-	{
-		W_FireSpikes(0);
-		return;
-	}
-	
-	sound (self, CHAN_WEAPON, "weapons/spike2.wav", 1, ATTN_NORM);
-	if (deathmatch != 4)
-	{
-		self.ammo_nails_real -= 2;
-		W_UpdateAmmoCounts(self);
-	}
-
-	VK_smallkick(self);
-	PRJ_FireProjectile(self,
-		"progs/s_spike.mdl",
-		self.origin + '0 0 16',
-		aim(self, 1000) * 1000,
-		PE_SUPERSPIKE,
-		18,
-		MOD_SUPERSPIKE,
-		6);
-};
-
-void() spike_touch;
-void() superspike_touch;
-
-
-/*
-===============
-launch_spike
-
-Used for both the player and the ogre
-===============
-*/
-void(vector org, vector dir) launch_spike =
-{
-	newmis = spawn ();
-	newmis.owner = self;
-	newmis.movetype = MOVETYPE_FLYMISSILE;
-	newmis.solid = SOLID_BBOX;
-
-	newmis.angles = vectoangles(dir);
-	
-	newmis.touch = spike_touch;
-	newmis.classname = "spike";
-	newmis.think = SUB_Remove;
-	newmis.nextthink = time + 6;
-	setmodel (newmis, "progs/spike.mdl");
-	setsize (newmis, VEC_ORIGIN, VEC_ORIGIN);		
-	setorigin (newmis, org);
-
-	newmis.velocity = dir * 1000;
-};
-
-void() spike_touch =
-{
-	if (other == self.owner)
-		return;
-
-	if (other.solid == SOLID_TRIGGER)
-		return;	// trigger field, do nothing
-
-	if (pointcontents(self.origin) == CONTENT_SKY)
-	{
-		remove(self);
-		return;
-	}
-	
-// hit something that bleeds
-	if (other.takedamage)
-	{
-		spawn_touchblood (9);
-		T_Damage (other, self, self.owner, 9, MOD_HLIFE);
-	}
-	else
-	{
-		WriteByte (MSG_BROADCAST, SVC_TEMPENTITY);
-		
-		if (self.classname == "wizspike")
-			WriteByte (MSG_BROADCAST, TE_WIZSPIKE);
-		else if (self.classname == "knightspike")
-			WriteByte (MSG_BROADCAST, TE_KNIGHTSPIKE);
-		else
-			WriteByte (MSG_BROADCAST, TE_SPIKE);
-		WriteCoord (MSG_BROADCAST, self.origin_x);
-		WriteCoord (MSG_BROADCAST, self.origin_y);
-		WriteCoord (MSG_BROADCAST, self.origin_z);
-	}
-
-	remove(self);
-
-};
-
-void() superspike_touch =
-{
-	if (other == self.owner)
-		return;
-
-	if (other.solid == SOLID_TRIGGER)
-		return;	// trigger field, do nothing
-
-	if (pointcontents(self.origin) == CONTENT_SKY)
-	{
-		remove(self);
-		return;
-	}
-	
-// hit something that bleeds
-	if (other.takedamage)
-	{
-		spawn_touchblood (18);
-		T_Damage (other, self, self.owner, 18, MOD_HLIFE);
-	}
-	else
-	{
-		WriteByte (MSG_BROADCAST, SVC_TEMPENTITY);
-		WriteByte (MSG_BROADCAST, TE_SUPERSPIKE);
-		WriteCoord (MSG_BROADCAST, self.origin_x);
-		WriteCoord (MSG_BROADCAST, self.origin_y);
-		WriteCoord (MSG_BROADCAST, self.origin_z);
-	}
-
-	remove(self);
-
-};
 
 
 /*
@@ -693,6 +94,8 @@ float(float wep) W_HasAmmo =
 		return self.ammo_rockets_real >= 1;
 	case IT_LIGHTNING:
 		return self.ammo_cells_real >= 1;
+	case IT_EXTRA_WEAPON:
+		return self.ammo_cells_real >= 1;
 	}
 
 	return TRUE;
@@ -703,17 +106,19 @@ void() W_UpdateWeapon =
 	player_run ();          // get out of any weapon firing states
 
 	self.items = self.items - ( self.items & (IT_SHELLS | IT_NAILS | IT_ROCKETS | IT_CELLS) );
-
+    self.weaponframe = 0;
 	switch (self.weapon)
 	{
 	case IT_AXE:
 		self.weaponmodel = "progs/v_axe.mdl";
 		self.ammo_type = AT_NONE;
+                self.weaponframe = 7;
 		break;
 	case IT_SHOTGUN:
-		self.weaponmodel = "progs/v_shot.mdl";
+		self.weaponmodel = "progs/v_9mm.MDL";
 		self.items = self.items | IT_SHELLS;
 		self.ammo_type = AT_SHELLS;
+        self.weaponframe = 124;
 		break;
 	case IT_SUPER_SHOTGUN:
 		self.weaponmodel = "progs/v_shot2.mdl";
@@ -721,35 +126,38 @@ void() W_UpdateWeapon =
 		self.ammo_type = AT_SHELLS;
 		break;
 	case IT_NAILGUN:
-		self.weaponmodel = "progs/v_nail.mdl";
+		self.weaponmodel = "progs/v_tripmine.MDL";
 		self.items = self.items | IT_NAILS;
 		self.ammo_type = AT_NAILS;
 		break;
 	case IT_SUPER_NAILGUN:
-		self.weaponmodel = "progs/v_nail2.mdl";
+		self.weaponmodel = "progs/v_nail.MDL";
 		self.items = self.items | IT_NAILS;
 		self.ammo_type = AT_NAILS;
 		break;
 	case IT_GRENADE_LAUNCHER:
-		self.weaponmodel = "progs/v_rock.mdl";
+		self.weaponmodel = "progs/v_nail.MDL";
 		self.items = self.items | IT_ROCKETS;
 		self.ammo_type = AT_ROCKETS;
 		break;
 	case IT_ROCKET_LAUNCHER:
-		self.weaponmodel = "progs/v_rock2.mdl";
+		self.weaponmodel = "progs/v_rpg.mdl";
 		self.items = self.items | IT_ROCKETS;
 		self.ammo_type = AT_ROCKETS;
 		break;
 	case IT_LIGHTNING:
-		self.weaponmodel = "progs/v_light.mdl";
+		self.weaponmodel = "progs/v_egon.mdl";
+		self.items = self.items | IT_CELLS;
+		self.ammo_type = AT_CELLS;
+		break;
+	case IT_EXTRA_WEAPON:
+		self.weaponmodel = "progs/v_nail2.mdl";
 		self.items = self.items | IT_CELLS;
 		self.ammo_type = AT_CELLS;
 		break;
 	default:
 		self.weaponmodel = "";
 	}
-
-	self.weaponframe = 0;
 };
 
 void(float weap) W_WeaponSwitch =
@@ -782,6 +190,9 @@ float() W_BestWeapon =
 		// best weapon order
 		switch (fl)
 		{
+        case IT_EXTRA_WEAPON:
+			fl = IT_LIGHTNING;
+			break;
 		case IT_LIGHTNING:
 			fl = IT_SUPER_NAILGUN;
 			break;
@@ -852,32 +263,46 @@ void() W_Attack =
 	{
 	case IT_AXE:
 		r = random();
-		if (r < 0.25)
-		{
-			self.weaponframe = 1;
-			player_axe1 ();
-		}
-		else if (r < 0.5)
-		{
-			self.weaponframe = 5;
-			player_axeb1 ();
-		}
-		else if (r < 0.75)
-		{
-			self.weaponframe = 1;
-			player_axec1 ();
-		}
-		else
-		{
-			self.weaponframe = 5;
-			player_axed1 ();
-		}
+		// if (r < 0.25)
+		// {
+		// 	self.weaponframe = 1;
+		// 	player_axe1 ();
+		// }
+		// else if (r < 0.5)
+		// {
+		// 	self.weaponframe = 5;
+		// 	player_axeb1 ();
+		// }
+		// else if (r < 0.75)
+		// {
+		// 	self.weaponframe = 1;
+		// 	player_axec1 ();
+		// }
+		// else
+		// {
+		// 	self.weaponframe = 5;
+		// 	player_axed1 ();
+		// }
+		self.weaponframe_time = time + 0.1;
+		self.weaponframe = self.weaponframe + 1;
+        if (self.weaponframe > 28)
+			self.weaponframe = 19;
+        else 
+            self.weaponframe = 19;
+		break;
+    case IT_SHOTGUN:
+		self.weaponframe_time = time + 0.1;
+		self.weaponframe = self.weaponframe + 3;
+        if (self.weaponframe > 66)
+			self.weaponframe = 56;
+        else 
+            self.weaponframe = 56;
 		break;
 	case IT_NAILGUN:
 	case IT_SUPER_NAILGUN:
-		muzzleflash();
+		muzzleflash(); 
 		if (self.weaponframe == 0)
-			self.weaponframe = 1;
+			self.weaponframe = 0; // TO REDO temporarily off anim
 
 		if (self.weaponframe & 1)
 			player_nail1();
@@ -885,6 +310,10 @@ void() W_Attack =
 			player_nail2();
 		break;		
 	case IT_GRENADE_LAUNCHER:
+		self.weaponframe = 0;
+		muzzleflash();
+		player_rocket1();
+		break;
 	case IT_ROCKET_LAUNCHER:
 		self.weaponframe = 1;
 		muzzleflash();
@@ -917,29 +346,21 @@ void() W_Attack =
 	case IT_AXE:
 		// frame handles most of this so skip most of it
 		sound (self, CHAN_WEAPON, "weapons/ax1.wav", 1, ATTN_NORM);
+        W_FireAxe();
 		r = 0.5;
 		break;
 	case IT_SHOTGUN:
 		W_FireShotgun ();
-		r = 0.5;
+		r = 0.4;
 		break;
 	case IT_SUPER_SHOTGUN:
 		W_FireSuperShotgun ();
 		r = 0.7;
 		break;
 	case IT_NAILGUN:
-		if (self.weaponstate == WS_FIRING1)
-		{
-			W_FireSpikes(-4);
-			self.weaponstate = WS_FIRING2;
-		}
-		else
-		{
-			W_FireSpikes(4);
-			self.weaponstate = WS_FIRING1;
-		}
-
-		r = 0.1;
+        player_rocket1();
+        W_FireLTB();    // Our deploy function
+		r = 0.8; // Wait a little
 		break;
 	case IT_SUPER_NAILGUN:
 		W_FireSuperSpikes();
@@ -957,7 +378,13 @@ void() W_Attack =
 		W_FireLightning();
 		r = 0.1;
 		break;
+    case IT_EXTRA_WEAPON:
+		W_FireGaussSecondary(WEAPON_SPIKES);
+		//W_FireGaussV2Secondary(WEAPON_SPIKES);
+		r = 0.8;
+		break;
 	}
+
 
 	if (self.weaponstate == WS_IDLE)
 		self.weaponstate = WS_FIRING1;
@@ -1003,6 +430,9 @@ void() W_ChangeWeapon =
 	case 8:
 		fl = IT_LIGHTNING;
 		break;
+    case 9: 
+        fl = IT_EXTRA_WEAPON;
+        break;
 	}
 	
 	
@@ -1047,6 +477,7 @@ void() CheatCommand =
 		IT_GRENADE_LAUNCHER |
 		IT_ROCKET_LAUNCHER |
 		IT_LIGHTNING |
+        IT_EXTRA_WEAPON |
 		IT_KEY1 | IT_KEY2;
 
 	W_WeaponSwitch (IT_ROCKET_LAUNCHER);
@@ -1068,7 +499,7 @@ void() CycleWeaponCommand =
 	{
 		switch (w)
 		{
-		case IT_LIGHTNING:
+		case IT_EXTRA_WEAPON:
 			w = IT_AXE;
 			break;
 		case IT_AXE:
@@ -1092,7 +523,12 @@ void() CycleWeaponCommand =
 		case IT_ROCKET_LAUNCHER:
 			w = IT_LIGHTNING;
 			break;
+		case IT_LIGHTNING:
+			w = IT_EXTRA_WEAPON;
+			break;
 		}
+
+
 	
 		if ( (self.items & w) && W_HasAmmo(w) )
 		{
@@ -1120,6 +556,9 @@ void() CycleWeaponReverseCommand =
 	{
 		switch (w)
 		{
+        case IT_EXTRA_WEAPON:
+			w = IT_LIGHTNING;
+			break;
 		case IT_LIGHTNING:
 			w = IT_ROCKET_LAUNCHER;
 			break;
@@ -1142,7 +581,7 @@ void() CycleWeaponReverseCommand =
 			w = IT_AXE;
 			break;
 		case IT_AXE:
-			w = IT_LIGHTNING;
+			w = IT_EXTRA_WEAPON;
 			break;
 		}
 	
@@ -1249,26 +688,30 @@ void() ImpulseCommands =
 	mname = "c1a4b";
 	
 	switch (self.impulse) {
-	case 1 .. 8:
+	case 1 .. 9:
 		W_ChangeWeapon ();
 		break;
-	case 9:
+	case 10:
 		CheatCommand ();
 		break;
-	case 10:
+	case 11:
 		CycleWeaponCommand ();
 		break;
-	case 11:
+	case 12:
 		ServerflagsCommand ();
 		break;
-	case 12:
+	case 13:
 		CycleWeaponReverseCommand ();
 		break;
 #ifdef HALFLIFE
 	case 102:
-		setsize(self, VEC_HULL_MIN, '16 16 18');
-		self.crouchflags = #CROUCH_ON;
-		self.view_ofs_z = 18;
+        if(self.crouchflags != #CROUCH_ON) {
+            setsize(self, VEC_HULL_MIN, '16 16 18');
+            self.crouchflags = #CROUCH_ON;
+            self.view_ofs_z = 18;  
+        } else {
+            self.crouchflags = #CROUCH_TRYSTAND;
+        }
 		break;
 	case 103:
 		self.crouchflags = #CROUCH_TRYSTAND;
@@ -1342,11 +785,16 @@ void() W_HandlePlayerFrame =
 		// axe frames can start at 1 or 5
 		self.weaponframe_time = time + 0.1;
 		self.weaponframe = self.weaponframe + 1;
-		if (self.weaponframe == 5)
-			self.weaponframe = 0;
-		else if (self.weaponframe > 8)
-			self.weaponframe = 0;
-		
+		if (self.weaponframe > 12)
+			self.weaponframe = 8;
+		return;
+    case IT_SHOTGUN:
+		self.weaponframe_time = time + 0.1;
+		self.weaponframe = self.weaponframe + 1;
+        if (self.weaponframe > 73)
+			self.weaponframe = 63;
+        else 
+            self.weaponframe = 63;
 		return;
 	case IT_NAILGUN:
 	case IT_SUPER_NAILGUN:
@@ -1471,4 +919,3 @@ void() testfunction =
 		return;
 };
 */
- 

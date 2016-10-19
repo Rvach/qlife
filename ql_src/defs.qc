@@ -816,3 +816,20 @@ float (entity e, float healamount, float ignore) T_Heal; // health function
 
 float(entity targ, entity inflictor) CanDamage;
 
+// Gauss & dependencies
+	float WM_UNINIT;
+	float MENU_FLAGS2 = 5;
+	float GYRO_TURBULENCEMOD_AIR = 0.1;
+	float MENU_BOTS = 6;
+
+	.float gaussfire;
+	.float gaussspeed;
+	.float gausscharge;
+	.float stopgausscharge;
+
+	.vector trace_endpos_temp;
+	.float hit_loc;
+	.vector vec_temp;
+	.vector angle_1;
+	.vector angle_2;
+	.vector endangle;
