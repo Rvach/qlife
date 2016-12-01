@@ -36,4 +36,9 @@ not fully supported yet)
 * Trickle, Baker - Testing/support
 * Valve Software - for making Half-life \m\
 
-
+## Waaagh Editor 
+	content from Pocket Half-Life
+	/GFX
+	/progs/v_*
+	/progs/WORLD
+	/maps/*.bsp
