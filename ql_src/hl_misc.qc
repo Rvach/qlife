@@ -119,13 +119,13 @@ void () world_items =
 	}
 	else if (self.type == 45)	// HEV
 	{
-		setmodel(self,"progs/player.mdl");
+		setmodel(self,"progs/kkelad.md2");
 		self.solid = SOLID_TRIGGER;
 		self.touch = world_items_touch;
 	}
 	else
 	{
-		setmodel(self,"progs/player.mdl");
+		setmodel(self,"progs/kkelad.md2");
 		dprint("world_items: no .type\n");
 		self.solid = SOLID_TRIGGER;
 		//self.nextthink = time + 5;

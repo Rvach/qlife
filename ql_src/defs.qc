@@ -184,13 +184,15 @@ void            end_sys_globals;                // flag for structure dumping
 // stats
 .float          health;
 .float          frags;
-.float          weapon;                 // one of the IT_SHOTGUN, etc flags
+.float          weapon;                 // one of the W_SUPER_BLASTER, etc flags
 .string         weaponmodel;
 .float          weaponframe;
 .float          currentammo;
 .float          ammo_shells, ammo_nails, ammo_rockets, ammo_cells;
+.float          ammo_blaster, ammo_blaster_super, ammo_shotgun, ammo_autogun, ammo_autogun_grenades, ammo_rpg, ammo_cells, ammo_cross_bow, ammo_tripmines;
 
 .float          items;                  // bit flags
+.float          weapons;                // bit flags
 
 .float          takedamage;
 .entity         chain;
@@ -319,34 +321,48 @@ void            end_sys_fields;                 // flag for structure dumping
 #define DAMAGE_YES 1
 #define DAMAGE_AIM 2
 
-// items
-float   IT_AXE                                  = 4096;
-float   IT_SHOTGUN                              = 1;
-float   IT_SUPER_SHOTGUN                = 2;
-float   IT_NAILGUN                              = 4;
-float   IT_SUPER_NAILGUN                = 8;
-float   IT_GRENADE_LAUNCHER             = 16;
-float   IT_ROCKET_LAUNCHER              = 32;
-float   IT_LIGHTNING                    = 64;
-float   IT_EXTRA_WEAPON                 = 128;
+// items // weapons left here only not to break existing code
+float   IT_AMMO_BLASTER                         = 4096; // blaster
+float   IT_AMMO_SUPER_BLASTER                   = 1;    // super_blaster
+float   IT_AMMO_SHOTGUN                         = 2;    // shotgun
+float   IT_AMMO_AUTOGUN                         = 4;    // autogun
+float   IT_AMMO_RPG                             = 8;    // rpg
+float   IT_AMMO_CELLS                           = 16;   // link // gauss
+float   IT_AMMO_CROSS_BOW                       = 32;   // crossbow
+float   IT_AMMO_TRIPMINES                       = 64;   // tripmine
+float   IT_AMMO_SATCHELS                        = 128;  // satchels/hivehand
 
-float   IT_SHELLS                               = 256;
-float   IT_NAILS                                = 512;
-float   IT_ROCKETS                              = 1024;
-float   IT_CELLS                                = 2048;
+float   IT_SHELLS                               = 256;	// IT_SUPER_BLASTER_AMMO
+float   IT_NAILS                                = 512;  // IT_SHOTGUN_AMMO
+float   IT_ROCKETS                              = 1024; // IT_AUTOGUN_AMMO
+float   IT_CELLS                                = 2048; // IT_RPG_AMMO
 
-float   IT_ARMOR1                               = 8192;
-float   IT_ARMOR2                               = 16384;
-float   IT_ARMOR3                               = 32768;
-float   IT_SUPERHEALTH                  = 65536;
+float   IT_ARMOR1                               = 8192; // IT_CELLS_AMMO
+float   IT_ARMOR2                               = 16384;// IT_CROSSBOW_AMMO
+float   IT_ARMOR3                               = 32768;// IT_TRIMPINES_AMMO
+float   IT_SUPERHEALTH                  		= 65536;
 
 float   IT_KEY1                                 = 131072;
 float   IT_KEY2                                 = 262144;
 
-float   IT_INVISIBILITY                 = 524288;
-float   IT_INVULNERABILITY              = 1048576;
-float   IT_SUIT                                 = 2097152;
+float   IT_INVISIBILITY                         = 524288;
+float   IT_INVULNERABILITY                      = 1048576;
+float   IT_SUIT                                 = 2097152;  // LJ
 float   IT_QUAD                                 = 4194304;
+
+// weapons
+float   W_BLASTER                              = 4096; // blaster
+float   W_SUPER_BLASTER                        = 1;    // super_blaster
+float   W_SHOTGUN                              = 2;    // shotgun
+float   W_AUTOGUN                              = 4;    // autogun
+float   W_RPG                                  = 8;    // rpg
+float   W_LINK                                 = 16;   // link
+float   W_GAUSS                                = 32;   // gauss
+float   W_CROSSBOW                             = 64;   // crossbow
+float   W_TRIPMINE                             = 128;  // tripmine
+float   W_SATCHELS                             = 256;  // satchels
+float   W_HIVEHAND                             = 512;  // hornetgun
+float   W_AUTOGUN_GRENADE_LAUNCHER             = 1024; // autogun_grenades
 
 // point content values
 
@@ -358,9 +374,9 @@ float   CONTENT_LAVA                    = -5;
 float   CONTENT_SKY                             = -6;
 
 vector  VEC_ORIGIN = '0 0 0';
-vector  VEC_HULL_MIN = '-16 -16 -24';
-vector  VEC_HULL_MAX = '16 16 32';
-
+vector  VEC_HULL_MIN = '-16 -16 0';   // vector  VEC_HULL_MIN = '-16 -16 -24'; // changing this leads to player shaking up and down
+vector  VEC_HULL_MAX = '16 16 72';      // Test: original value: vector  '16 16 32'
+vector  VEC_HULL_CROUCH  = '16 16 54';
 vector  VEC_HULL2_MIN = '-32 -32 -24';
 vector  VEC_HULL2_MAX = '32 32 64';
 
@@ -499,10 +515,15 @@ entity shub; // boss entity
 .string map; // used with world/trigger_changelevel, inherited
 
 // used with monsters/players
-.INTEGER ammo_shells_real;	// real shells count
-.INTEGER ammo_nails_real;	// real nails count
-.INTEGER ammo_rockets_real;	// real rockets count
-.INTEGER ammo_cells_real;	// real cells count
+.INTEGER ammo_blaster_real;	        // real blaster ammocount
+.INTEGER ammo_blaster_super_real;	// real super blaster ammo count
+.INTEGER ammo_shotgun_real;	        // real shotgun ammo count
+.INTEGER ammo_autogun_real;	        // real autogun ammo count
+.INTEGER ammo_autogun_grenades_real;// real autogun grenades ammo count
+.INTEGER ammo_rpg_real;	            // real rpg ammo count
+.INTEGER ammo_cells_real;	        // real cells ammo count
+.INTEGER ammo_cross_bow_real;	    // real crossbow ammo count
+.INTEGER ammo_tripmines_real;	    // real tripmines ammo count
 
 // Zoid Additions
 .float		maxspeed;		// Used to set Maxspeed on a player
@@ -574,10 +595,15 @@ enum {
 // ammo type defines
 enum {
 	AT_NONE,
-	AT_SHELLS,
-	AT_NAILS,
-	AT_ROCKETS,
-	AT_CELLS
+	AT_BLASTER,
+	AT_SUPER_BLASTER,
+	AT_SHOTGUN,
+	AT_AUTOGUN,
+	AT_AUTOGUN_GRENADE,
+	AT_RPG,
+	AT_CELLS,
+	AT_CROSSBOW,
+	AT_TRIPMINE
 };
 
 // unions
@@ -816,7 +842,7 @@ float (entity e, float healamount, float ignore) T_Heal; // health function
 
 float(entity targ, entity inflictor) CanDamage;
 
-// Gauss & dependencies
+// - HLAG DEVELOPMENT --------------------------------------------------------------------
 	float WM_UNINIT;
 	float MENU_FLAGS2 = 5;
 	float GYRO_TURBULENCEMOD_AIR = 0.1;
@@ -833,3 +859,26 @@ float(entity targ, entity inflictor) CanDamage;
 	.vector angle_1;
 	.vector angle_2;
 	.vector endangle;
+// - HLAG ------------ --------------------------------------------------------------------
+	.float secondary_attack_mode;					// secondary
+	.float charging_weapon;			// charging weapon flag (e.g. gauss secondary)
+	.float button0_save;            // Fire Btn // DEBUG
+    // CROSSBOW
+    .float zoom_off_fov;            // default player's zoom_default
+    .float zooming;
+	//items
+	float FREEMOVE;
+	.float longjump;
+	.float longjumpused;
+    // RPG
+    .float laser_active;
+    .float glow_color;	//This is the 8bit color of the glow
+    .float glow_size;	//Size of the glow in units
+    .float glow_trail;	//0 = no trail, 1 = trail
+    void(vector org, vector vel, float howmany) te_spark = #411;		//A nice spark effect
+    void(vector org) te_plasmaburn = #433;		//Produces a light flash and marks walls
+    float   EF_NODRAW       = 16;	//Ent isn't rendered at all, can also use on a light source
+    float   EF_ADDITIVE     = 32;   //Ent is rendered with additive blending
+    float   EF_BLUE         = 64;	//Ent emits blue light - similar to the QuakeWorld (Ugh) effect
+    float   EF_RED          = 128;	//Ent emits red light - see above
+    float   EF_FLAME        = 1024;	//Ent emits smoke and fire particles

@@ -48,6 +48,7 @@ called when a spectator connects to a server
 */
 void() SpectatorConnect =
 {
+    ClientFixRankings(); // FrikBot
 	bprint3 (PRINT_MEDIUM, "Spectator ", self.netname, " entered the game\n");
 
 	self.goalentity = world; // used for impulse 1 below

@@ -276,7 +276,7 @@ void() monster_enforcer =
 	self.th_die = enf_die;
 	self.th_missile = enf_atk1;
 
-	self.ammo_cells_real = 5; // drop 5 cells on death
+	self.ammo_autogun_real = 5; // drop 5 cells on death
 
 	walkmonster_start();
 };

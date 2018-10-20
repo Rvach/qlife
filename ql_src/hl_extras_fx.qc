@@ -35,7 +35,7 @@ void() shell_touch =
 	if (self.attack_finished > 1)
 		return;
 	
-	if (self.owner.weapon == IT_SUPER_NAILGUN)
+	if (self.owner.weapon == W_RPG)
 		return;
 	
 	sound (self, CHAN_AUTO, "weapons/tink2.wav", random(), ATTN_NORM);
@@ -59,7 +59,7 @@ void() eject_shell =
 	setsize (shell, VEC_ORIGIN, VEC_ORIGIN);	
 	setorigin (shell, self.origin + v_forward*40 + v_right*6);
 	
-	if (self.weapon == IT_SUPER_NAILGUN)
+	if (self.weapon == W_AUTOGUN)
 		shell.skin = 1;
 	else
 		shell.skin = 0;
@@ -176,7 +176,7 @@ void() spark_spawn =
 };
 
 /*QUAKED fx_spark (0 .5 .8) (-8 -8 -8) (8 8 8) ? START_ON SILENT
-Throws sparks randomly 360¼ around the origin in the horizontal axis.
+Throws sparks randomly 360ï¿½ around the origin in the horizontal axis.
 Can toggle on/off with multiple triggers.
 
 "wait"			Seed for the frequency of the sparks (0 is pretty quick).

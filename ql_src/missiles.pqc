@@ -32,7 +32,7 @@ entity(string mismodel, vector misorigin, vector misvelocity) launch_missile =
 	}
 	else
 	{
-		if (mismodel == "progs/grenade.mdl")
+		if (mismodel == "progs/WORLD/grenade.md2")
 		{
 			missile.classname = "grenade";
 			missile.movetype = 10;

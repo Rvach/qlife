@@ -1,0 +1,7 @@
+#pragma progs_dat "../../csprogs.dat"
+
+#define CSQC		//select the module
+//#pragma TARGET FTE
+
+#include "fteextensions.qc"			//also sets up system defs
+#include "csqc_main.qc"

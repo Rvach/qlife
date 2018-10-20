@@ -219,7 +219,7 @@ void() finale_4 =
 
 // put a player model down
 	n = spawn();
-	setmodel (n, "progs/player.mdl");
+	setmodel (n, "progs/kkelad.md2");
 	oldo = oldo - '32 264 0';
 	setorigin (n, oldo);
 	n.angles = '0 290 0';

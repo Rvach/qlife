@@ -188,6 +188,7 @@ World Types:
 //=======================
 void() worldspawn =
 {
+    BotInit();
 	lastspawn = world;
 	spotspawn = 0;
 
@@ -283,7 +284,7 @@ void() worldspawn =
 	precache_sound ("items/protect3.wav");
 
 
-	precache_model ("progs/player.mdl");
+	precache_model ("progs/kkelad.md2");
 	precache_model ("progs/eyes.mdl");
 	precache_model ("progs/h_player.mdl");
 	precache_model ("progs/gib1.mdl");
@@ -297,8 +298,8 @@ void() worldspawn =
 	precache_model ("progs/v_shot.mdl");
 	precache_model ("progs/v_nail.mdl");
 	precache_model ("progs/v_rock.mdl");
-	precache_model ("progs/v_shot2.mdl");
-	precache_model ("progs/v_nail2.mdl");
+	precache_model ("progs/w_shotgun.md2");
+	precache_model ("progs/v_gauss.mdl");
 	precache_model ("progs/v_rock2.mdl");
 
 	precache_model ("progs/bolt.mdl");              // for lightning gun
@@ -307,7 +308,7 @@ void() worldspawn =
 	precache_model ("progs/lavaball.mdl");  // for testing
 	
 	precache_model ("progs/missile.mdl");
-	precache_model ("progs/grenade.mdl");
+	precache_model ("progs/WORLD/grenade.md2");
 	precache_model ("progs/spike.mdl");
 	precache_model ("progs/s_spike.mdl");
 
@@ -377,6 +378,7 @@ void() worldspawn =
 
 void() StartFrame =
 {
+    BotFrame();
 	timelimit = cvar("timelimit") * 60;
 	fraglimit = cvar("fraglimit");
 #ifdef NETQUAKE

@@ -64,7 +64,7 @@ void() OgreFireGrenade =
 	vel = normalize(self.enemy.origin - self.origin) * 600;
 	vel_z = 200;
 
-	PRJ_FireProjectile(self, "progs/grenade.mdl", self.origin, vel, PE_EXPLOSIONGROUND, 0, 0, 2.5);
+	PRJ_FireProjectile(self, "progs/WORLD/grenade.md2", self.origin, vel, PE_EXPLOSIONGROUND, 0, 0, 2.5);
 	PRJ_SetRadiusDamage(40, 80, MOD_OGRE);
 	PRJ_SetBouncyProjectile();
 };
@@ -368,7 +368,7 @@ void() monster_ogre =
 	}
 	precache_model ("progs/ogre.mdl");
 	precache_model ("progs/h_ogre.mdl");
-	precache_model ("progs/grenade.mdl");
+	precache_model ("progs/WORLD/grenade.md2");
 
 	precache_sound ("ogre/ogdrag.wav");
 	precache_sound ("ogre/ogdth.wav");
@@ -394,7 +394,7 @@ void() monster_ogre =
 	self.th_missile = ogre_nail1;
 	self.th_pain = ogre_pain;
 
-	self.ammo_rockets_real = 2; // drop 2 rockets on death
+	self.ammo_shotgun_real = 2; // drop 2 rockets on death
 	
 	walkmonster_start();
 };

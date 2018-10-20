@@ -56,22 +56,24 @@ string(float weap) I_WeaponName =
 {
 	switch (weap)
 	{
-	case IT_AXE:
-		return "Axe";
-	case IT_SHOTGUN:
-		return "Shotgun";
-	case IT_SUPER_SHOTGUN:
-		return "Double-barrelled Shotgun";
-	case IT_NAILGUN:
-		return "Nailgun";
-	case IT_SUPER_NAILGUN:
-		return "Super Nailgun";
-	case IT_GRENADE_LAUNCHER:
-		return "Grenade Launcher";
-	case IT_ROCKET_LAUNCHER:
-		return "Rocket Launcher";
-	case IT_LIGHTNING:
-		return "Thunderbolt";
+        case W_BLASTER:
+            return "Blaster";
+        case W_SUPER_BLASTER:
+            return "Blaster Rifle";
+        case W_SHOTGUN:
+            return "Shotgun";
+        case W_AUTOGUN:
+            return "Self-firer weapon";
+        case W_RPG:
+            return "Rocket Launcher";
+        case W_LINK:
+            return "Link weapon";
+        case W_GAUSS:
+            return "Gauss cannon";
+        case W_CROSSBOW:
+            return "Crossbow";
+        case W_TRIPMINE:
+            return "Tripmine";
 	}
 
 	return "";
@@ -99,7 +101,7 @@ void() q_touch =
 		{
 			other.armortype = 0;
 			other.armorvalue = 0;
-			other.ammo_cells_real = 0;
+			other.ammo_autogun_real = 0;
 			W_UpdateAmmoCounts(other);
 		}
 
@@ -285,10 +287,12 @@ void() item_health =
 
 	if (self.spawnflags & H_ROTTEN)
 	{
-		precache_model("maps/b_bh10.bsp");
+		//precache_model("maps/b_bh10.bsp");
 
 		precache_sound("items/r_item1.wav");
-		setmodel(self, "maps/b_bh10.bsp");
+		//setmodel(self, "maps/b_bh10.bsp");
+		precache_model("progs/WORLD/world_item_health.md2");
+		setmodel(self, "progs/WORLD/world_item_health.md2");
 		self.noise = "items/r_item1.wav";
 		self.healamount = 15;
 		self.healtype = 0;
@@ -296,18 +300,22 @@ void() item_health =
 	else
 	if (self.spawnflags & H_MEGA)
 	{
-		precache_model("maps/b_bh100.bsp");
+		//precache_model("maps/b_bh100.bsp");
+		precache_model("progs/WORLD/world_item_health.md2");
+		setmodel(self, "progs/WORLD/world_item_health.md2");
 		precache_sound("items/r_item2.wav");
-		setmodel(self, "maps/b_bh100.bsp");
+		//setmodel(self, "maps/b_bh100.bsp");
 		self.noise = "items/r_item2.wav";
 		self.healamount = 100;
 		self.healtype = 2;
 	}
 	else
 	{
-		precache_model("maps/b_bh25.bsp");
+		//precache_model("maps/b_bh25.bsp");
 		precache_sound("items/health1.wav");
-		setmodel(self, "maps/b_bh25.bsp");
+		//setmodel(self, "maps/b_bh25.bsp");
+		precache_model("progs/WORLD/world_item_health.md2");
+		setmodel(self, "progs/WORLD/world_item_health.md2");
 		self.noise = "items/health1.wav";
 		self.healamount = 25;
 		self.healtype = 1;
@@ -443,8 +451,10 @@ void() armor_touch =
 void() item_armor1 =
 {
 	self.touch = armor_touch;
-	precache_model ("progs/armor.mdl");
-	setmodel (self, "progs/armor.mdl");
+	//precache_model ("progs/armor.mdl");
+	//setmodel (self, "progs/armor.mdl");
+	precache_model ("progs/WORLD/world_item_battery.md2");
+	setmodel (self, "progs/WORLD/world_item_battery.md2");
 	self.skin = 0;
 	setsize (self, '-16 -16 0', '16 16 56');
 	StartItem ();
@@ -486,47 +496,51 @@ WEAPONS
 
 void() bound_other_ammo =
 {
-	if (other.ammo_shells_real > 100)
-		other.ammo_shells_real = 100;
-	if (other.ammo_nails_real > 200)
-		other.ammo_nails_real = 200;
-	if (other.ammo_rockets_real > 100)
-		other.ammo_rockets_real = 100;               
-	if (other.ammo_cells_real > 100)
-		other.ammo_cells_real = 100;         
+	if (other.ammo_blaster_real > 999)
+		other.ammo_blaster_real = 999;
+	if (other.ammo_blaster_super_real > 200)
+		other.ammo_blaster_super_real = 200;
+	if (other.ammo_shotgun_real > 100)
+		other.ammo_shotgun_real = 100;               
+	if (other.ammo_autogun_real > 100)
+		other.ammo_autogun_real = 100;         
 };
 
 
 float(float w) RankForWeapon =
 {
-	if (w == IT_LIGHTNING)	
+	if (w == W_GAUSS)
 		return 1;
-	if (w == IT_ROCKET_LAUNCHER)
+	if (w == W_LINK)
 		return 2;
-	if (w == IT_SUPER_NAILGUN)
-		return 3;
-	if (w == IT_GRENADE_LAUNCHER)
+	if (w == W_CROSSBOW)	
 		return 4;
-	if (w == IT_SUPER_SHOTGUN)
+	if (w == W_RPG)
 		return 5;
-	if (w == IT_NAILGUN)
+	if (w == W_AUTOGUN)
+		return 5;
+	if (w == W_SHOTGUN)
 		return 6;
-	return 7;
+	if (w == W_SUPER_BLASTER)
+		return 6;
+	if (w == W_TRIPMINE)
+		return 7;
+	return 8;
 };
 
 float (float w) WeaponCode =
 {
-	if (w == IT_SUPER_SHOTGUN)
+	if (w == W_SHOTGUN)
 		return 3;
-	if (w == IT_NAILGUN)
+	if (w == W_AUTOGUN)
 		return 4;
-	if (w == IT_SUPER_NAILGUN)
+	if (w == W_RPG)
 		return 5;
-	if (w == IT_GRENADE_LAUNCHER)
+	if (w == W_LINK)
 		return 6;
-	if (w == IT_ROCKET_LAUNCHER)
+	if (w == W_GAUSS)
 		return 7;
-	if (w == IT_LIGHTNING)
+	if (w == W_CROSSBOW)
 		return 8;
 	return 1;
 };
@@ -548,7 +562,7 @@ void(float old, float new) Deathmatch_Weapon =
 	or = RankForWeapon (self.weapon);
 	nr = RankForWeapon (new);
 
-	if ( nr == IT_LIGHTNING && self.waterlevel > 1 )
+	if ( nr == W_LINK && self.waterlevel > 1 )
 		return;
 
 	if ( nr < or )
@@ -584,27 +598,37 @@ void() weapon_touch =
 		leave = 0;
 
 	// check if we have the weapon already
-	if (leave && (other.items & self.weapon))
+	if (leave && (other.weapons & self.weapon))
 		return;
 	new = self.weapon;
 
 	// add ammo here
 	switch (new)
 	{
-	case IT_SUPER_SHOTGUN:		
-		other.ammo_shells_real += 5;
-		break;
-	case IT_NAILGUN:
-	case IT_SUPER_NAILGUN:
-		other.ammo_nails_real += 30;
-		break;
-	case IT_GRENADE_LAUNCHER:
-	case IT_ROCKET_LAUNCHER:
-		other.ammo_rockets_real += 5;
-		break;
-	case IT_LIGHTNING:
-		other.ammo_cells_real += 15;
-		break;
+        case W_SUPER_BLASTER:		
+            other.ammo_blaster_super_real += 6;
+            break;
+        case W_SHOTGUN:		
+            other.ammo_shotgun_real += 16;
+            break;
+        case W_AUTOGUN:
+            other.ammo_autogun_real += 30;
+            break;
+        case W_RPG:
+            other.ammo_rpg_real += 2;
+            break;
+        case W_LINK:
+            other.ammo_cells_real += 30;
+            break;
+        case W_GAUSS:
+            other.ammo_cells_real += 20;
+            break;
+        case W_CROSSBOW:
+            other.ammo_cross_bow_real+= 5;
+            break;
+        case W_TRIPMINE:
+            other.ammo_tripmines_real += 3;
+            break;
 	}
 	
 	sprint3 (other, PRINT_LOW, "You got the ", I_WeaponName(new), "\n");
@@ -616,8 +640,8 @@ void() weapon_touch =
 	W_UpdateAmmoCounts(other);
 
 // change to the weapon
-	old = other.items;
-	other.items = other.items | new;
+	old = other.weapons;
+	other.weapons = other.weapons | new;
 	
 	stemp = self;
 	self = other;
@@ -626,7 +650,7 @@ void() weapon_touch =
 	{
 		if (self.flags & FL_INWATER)
 		{
-			if (new != IT_LIGHTNING)
+			if (new != W_LINK)
 			{
 				Deathmatch_Weapon (old, new);
 			}
@@ -657,6 +681,23 @@ void() weapon_touch =
 	SUB_UseTargets();                               // fire all targets / killtargets
 };
 
+/*QUAKED weapon_super_blaster (0 .5 .8) (-16 -16 0) (16 16 32)
+*/
+
+void() weapon_super_blaster =
+{
+	if (deathmatch <= 3)
+	{
+		precache_model ("progs/WORLD/world_super_blaster.md2");
+		setmodel (self, "progs/WORLD/world_super_blaster.md2");
+		self.weapon = W_SUPER_BLASTER;
+		self.touch = weapon_touch;
+		setsize (self, '-16 -16 0', '16 16 56');
+		StartItem ();
+	}
+	else
+		remove(self);
+};
 
 /*QUAKED weapon_supershotgun (0 .5 .8) (-16 -16 0) (16 16 32)
 */
@@ -665,9 +706,9 @@ void() weapon_supershotgun =
 {
 	if (deathmatch <= 3)
 	{
-		precache_model ("progs/WORLD/wrld_shotgun.MDL");
-		setmodel (self, "progs/WORLD/wrld_shotgun.MDL");
-		self.weapon = IT_SUPER_SHOTGUN;
+		precache_model ("progs/WORLD/world_shotgun.md2");
+		setmodel (self, "progs/WORLD/world_shotgun.md2");
+		self.weapon = W_SHOTGUN;
 		self.touch = weapon_touch;
 		setsize (self, '-16 -16 0', '16 16 56');
 		StartItem ();
@@ -683,9 +724,9 @@ void() weapon_nailgun =
 {
 	if (deathmatch <= 3)
 	{
-		precache_model ("progs/WORLD/wrld_mp5.MDL");
-		setmodel (self, "progs/WORLD/wrld_mp5.MDL");
-		self.weapon = IT_NAILGUN;
+		precache_model ("progs/WORLD/world_autogun.md2");
+		setmodel (self, "progs/WORLD/world_autogun.md2");
+		self.weapon = W_AUTOGUN;
 		self.touch = weapon_touch;
 		setsize (self, '-16 -16 0', '16 16 56');
 		StartItem ();
@@ -701,9 +742,9 @@ void() weapon_supernailgun =
 {
 	if (deathmatch <= 3)
 	{
-		precache_model ("progs/WORLD/wrld_mp5.MDL");
-		setmodel (self, "progs/WORLD/wrld_mp5.MDL");
-		self.weapon = IT_SUPER_NAILGUN;
+		precache_model ("progs/WORLD/world_autogun.md2");
+		setmodel (self, "progs/WORLD/world_autogun.md2");
+		self.weapon = W_AUTOGUN;
 		self.touch = weapon_touch;
 		setsize (self, '-16 -16 0', '16 16 56');
 		StartItem ();
@@ -719,9 +760,9 @@ void() weapon_grenadelauncher =
 {
 	if (deathmatch <= 3)
 	{
-		precache_model ("progs/WORLD/wrld_mp5.MDL");
-		setmodel (self, "progs/WORLD/wrld_mp5.MDL");
-		self.weapon = IT_GRENADE_LAUNCHER;
+		precache_model ("progs/WORLD/world_autogun.md2");
+		setmodel (self, "progs/WORLD/world_autogun.md2");
+		self.weapon = W_AUTOGUN_GRENADE_LAUNCHER;
 		self.touch = weapon_touch;
 		setsize (self, '-16 -16 0', '16 16 56');
 		StartItem ();
@@ -737,9 +778,9 @@ void() weapon_rocketlauncher =
 {
 	if (deathmatch <= 3)
 	{
-		precache_model ("progs/WORLD/wrld_rpg.MDL");
-		setmodel (self, "progs/WORLD/wrld_rpg.MDL");
-		self.weapon = IT_ROCKET_LAUNCHER;
+		precache_model ("progs/WORLD/world_rocket.md2");
+		setmodel (self, "progs/WORLD/world_rocket.md2");
+		self.weapon = W_RPG;
 		self.touch = weapon_touch;
 		setsize (self, '-16 -16 0', '16 16 56');
 		StartItem ();
@@ -749,16 +790,63 @@ void() weapon_rocketlauncher =
 };
 
 
-/*QUAKED weapon_lightning (0 .5 .8) (-16 -16 0) (16 16 32)
+/*QUAKED weapon_link_gun (0 .5 .8) (-16 -16 0) (16 16 32)
 */
 
-void() weapon_lightning =
+void() weapon_link_gun =
 {
 	if (deathmatch <= 3)
 	{
-		precache_model ("progs/WORLD/wrld_egon.MDL");
-		setmodel (self, "progs/WORLD/wrld_egon.MDL");
-		self.weapon = IT_LIGHTNING;
+		precache_model ("progs/WORLD/world_link.md2");
+		setmodel (self, "progs/WORLD/world_link.md2");
+		self.weapon = W_LINK;
+		self.touch = weapon_touch;
+		setsize (self, '-16 -16 0', '16 16 56');
+		StartItem ();
+	}
+	else
+		remove(self);
+};
+
+void() weapon_gauss_gun =
+{
+	if (deathmatch <= 3)
+	{
+		precache_model ("progs/WORLD/world_gauss.md2");
+		setmodel (self, "progs/WORLD/world_gauss.md2");
+		self.weapon = W_GAUSS;
+		self.touch = weapon_touch;
+		setsize (self, '-16 -16 0', '16 16 56');
+		StartItem ();
+	}
+	else
+		remove(self);
+};
+
+void() weapon_cross_bow =
+{
+	if (deathmatch <= 3)
+	{
+		//precache_model ("progs/WORLD/wrld_crossbow.MDL");
+		//setmodel (self, "progs/WORLD/wrld_crossbow.MDL");
+		precache_model ("progs/WORLD/world_crossbow.md2");
+		setmodel (self, "progs/WORLD/world_crossbow.md2");
+		self.weapon = W_CROSSBOW;
+		self.touch = weapon_touch;
+		setsize (self, '-16 -16 0', '16 16 56');
+		StartItem ();
+	}
+	else
+		remove(self);
+};
+
+void() weapon_trip_mine =
+{
+	if (deathmatch <= 3)
+	{
+		precache_model ("progs/WORLD/world_tripmine.md2");
+		setmodel (self, "progs/WORLD/world_tripmine.md2");
+		self.weapon = W_TRIPMINE;
 		self.touch = weapon_touch;
 		setsize (self, '-16 -16 0', '16 16 56');
 		StartItem ();
@@ -795,26 +883,56 @@ local float             best;
 
 	switch (self.weapon)
 	{
-	case 1: // shotgun
-		if (other.ammo_shells_real >= 100)
-			return;
-		other.ammo_shells_real = other.ammo_shells_real + self.ammo_count;
-		break;
-	case 2: // spikes
-		if (other.ammo_nails_real >= 200)
-			return;
-		other.ammo_nails_real = other.ammo_nails_real + self.ammo_count;
-		break;
-	case 3: // rockets
-		if (other.ammo_rockets_real >= 100)
-			return;
-		other.ammo_rockets_real = other.ammo_rockets_real + self.ammo_count;
-		break;
-	case 4: // cells
-		if (other.ammo_cells_real >= 100)
-			return;
-		other.ammo_cells_real = other.ammo_cells_real + self.ammo_count;
-		break;
+        case W_BLASTER: // blaster
+            if (other.ammo_blaster_real >= 100)
+                return;
+            other.ammo_blaster_real = other.ammo_blaster_real + self.ammo_count;
+            break;
+        case W_SUPER_BLASTER: // super blaster
+            if (other.ammo_blaster_super_real >= 200)
+                return;
+            other.ammo_blaster_super_real = other.ammo_blaster_super_real + self.ammo_count;
+            break;
+        case W_SHOTGUN: // shotgun
+            if (other.ammo_shotgun_real >= 100)
+                return;
+            other.ammo_shotgun_real = other.ammo_shotgun_real + self.ammo_count;
+            break;
+        case W_AUTOGUN: // autogun
+            if (other.ammo_autogun_real >= 100)
+                return;
+            other.ammo_autogun_real = other.ammo_autogun_real + self.ammo_count;
+            break;
+        case W_AUTOGUN_GRENADE_LAUNCHER: // ammo_autogun_grenades_real
+            if (other.ammo_autogun_grenades_real >= 100)
+                return;
+            other.ammo_autogun_grenades_real = other.ammo_autogun_grenades_real + self.ammo_count;
+            break;
+        case W_RPG: // ammo_rpg
+            if (other.ammo_rpg_real >= 100)
+                return;
+            other.ammo_rpg_real = other.ammo_rpg_real + self.ammo_count;
+            break;
+        case W_LINK: // ammo_cells
+            if (other.ammo_cells_real >= 100)
+                return;
+            other.ammo_cells_real = other.ammo_cells_real + self.ammo_count;
+            break;
+        case W_GAUSS: // ammo_cells
+            if (other.ammo_cells_real >= 100)
+                return;
+            other.ammo_cells_real = other.ammo_cells_real + self.ammo_count;
+            break;
+        case W_CROSSBOW: // ammo_cross_bow
+            if (other.ammo_cross_bow_real >= 100)
+                return;
+            other.ammo_cross_bow_real = other.ammo_cross_bow_real + self.ammo_count;
+            break;
+        case W_TRIPMINE: // ammo_tripmines
+            if (other.ammo_tripmines_real >= 100)
+                return;
+            other.ammo_tripmines_real = other.ammo_tripmines_real + self.ammo_count;
+            break;
 	}
 
 	bound_other_ammo ();
@@ -860,10 +978,10 @@ local float             best;
 
 float WEAPON_BIG2 = 1;
 
-/*QUAKED item_shells (0 .5 .8) (0 0 0) (32 32 32) big
+/*QUAKED item_ammo_super_blaster (0 .5 .8) (0 0 0) (32 32 32) big
 */
 
-void() item_shells =
+void() item_ammo_super_blaster =
 {
 	if (deathmatch == 4)
 	{
@@ -873,28 +991,41 @@ void() item_shells =
 
 	self.touch = ammo_touch;
 
-	if (self.spawnflags & WEAPON_BIG2)
+        precache_model ("progs/world/world_ammo_super_blaster.md2");        //precache_model ("maps/b_shell0.bsp");
+        setmodel (self, "progs/world/world_ammo_super_blaster.md2");        //setmodel (self, "maps/b_shell0.bsp");
+        self.ammo_count = 20;
+
+	self.weapon = W_SUPER_BLASTER;
+	self.netname = "ammo_super_blaster";
+	setsize (self, '0 0 0', '32 32 56');
+	StartItem ();
+};
+
+void() item_ammo_shotgun =
+{
+	if (deathmatch == 4)
 	{
-		precache_model ("maps/b_shell1.bsp");
-		setmodel (self, "maps/b_shell1.bsp");
+		remove(self);
+		return;
+	}
+
+	self.touch = ammo_touch;
+
+		precache_model ("progs/world/world_ammo_shotgun.md2");		//precache_model ("maps/b_shell1.bsp");
+		setmodel (self, "progs/world/world_ammo_shotgun.md2");		//setmodel (self, "maps/b_shell1.bsp");
 		self.ammo_count = 40;
-	}
-	else
-	{
-		precache_model ("maps/b_shell0.bsp");
-		setmodel (self, "maps/b_shell0.bsp");
-		self.ammo_count = 20;
-	}
-	self.weapon = 1;
-	self.netname = "shells";
+
+	self.weapon = W_SHOTGUN;
+	self.netname = "ammo_shotgun";
 	setsize (self, '0 0 0', '32 32 56');
 	StartItem ();
 };
 
-/*QUAKED item_spikes (0 .5 .8) (0 0 0) (32 32 32) big
+
+/*QUAKED item_ammo_autogun (0 .5 .8) (0 0 0) (32 32 32) big
 */
 
-void() item_spikes =
+void() item_ammo_autogun =
 {
 	if (deathmatch == 4)
 	{
@@ -904,29 +1035,17 @@ void() item_spikes =
 
 	self.touch = ammo_touch;
 
-	if (self.spawnflags & WEAPON_BIG2)
-	{
-		precache_model ("maps/b_nail1.bsp");
-		setmodel (self, "maps/b_nail1.bsp");
-		self.ammo_count = 50;
-	}
-	else
-	{
-		precache_model ("maps/b_nail0.bsp");
-		setmodel (self, "maps/b_nail0.bsp");
+		precache_model ("progs/world/world_ammo_autogun.md2");		//precache_model ("maps/b_nail0.bsp");
+		setmodel (self, "progs/world/world_ammo_autogun.md2");		//setmodel (self, "maps/b_nail0.bsp");
 		self.ammo_count = 25;
-	}
-	self.weapon = 2;
-	self.netname = "nails";
+
+	self.weapon = W_AUTOGUN;
+	self.netname = "ammo_autogun";
 	setsize (self, '0 0 0', '32 32 56');
 	StartItem ();
-
 };
 
-/*QUAKED item_rockets (0 .5 .8) (0 0 0) (32 32 32) big
-*/
-
-void() item_rockets =
+void() item_ammo_autogun_grenades =
 {
 	if (deathmatch == 4)
 	{
@@ -936,30 +1055,45 @@ void() item_rockets =
 
 	self.touch = ammo_touch;
 
-	if (self.spawnflags & WEAPON_BIG2)
+		precache_model ("progs/WORLD/world_ammo_autogun_grenade.md2");		//precache_model ("maps/b_rock0.bsp");
+		setmodel (self, "progs/WORLD/world_ammo_autogun_grenade.md2");		//setmodel (self, "maps/b_rock0.bsp");
+		self.ammo_count = 2;
+
+	self.weapon = W_AUTOGUN_GRENADE_LAUNCHER;
+	self.netname = "ammo_autogun_grenades";
+	setsize (self, '0 0 0', '32 32 56');
+	StartItem ();
+
+};
+
+/*QUAKED item_ammo_rpg (0 .5 .8) (0 0 0) (32 32 32) big
+*/
+
+void() item_ammo_rpg =
+{
+	if (deathmatch == 4)
 	{
-		precache_model ("maps/b_rock1.bsp");
-		setmodel (self, "maps/b_rock1.bsp");
+		remove(self);
+		return;
+	}
+
+	self.touch = ammo_touch;
+
+		precache_model ("progs/world/world_ammo_rocket.md2");		//precache_model ("maps/b_rock1.bsp");
+		setmodel (self, "progs/world/world_ammo_rocket.md2");		//setmodel (self, "maps/b_rock1.bsp");
 		self.ammo_count = 10;
-	}
-	else
-	{
-		precache_model ("maps/b_rock0.bsp");
-		setmodel (self, "maps/b_rock0.bsp");
-		self.ammo_count = 5;
-	}
-	self.weapon = 3;
-	self.netname = "rockets";
+
+	self.weapon = W_RPG;
+	self.netname = "ammo_rpg";
 	setsize (self, '0 0 0', '32 32 56');
 	StartItem ();
 
 };
 
-
-/*QUAKED item_cells (0 .5 .8) (0 0 0) (32 32 32) big
+/*QUAKED item_ammo_cells (0 .5 .8) (0 0 0) (32 32 32) big
 */
 
-void() item_cells =
+void() item_ammo_cells =
 {
 	if (deathmatch == 4)
 	{
@@ -969,25 +1103,57 @@ void() item_cells =
 
 	self.touch = ammo_touch;
 
-	if (self.spawnflags & WEAPON_BIG2)
-	{
-		precache_model ("maps/b_batt1.bsp");
-		setmodel (self, "maps/b_batt1.bsp");
-		self.ammo_count = 12;
-	}
-	else
-	{
-		precache_model ("maps/b_batt0.bsp");
-		setmodel (self, "maps/b_batt0.bsp");
-		self.ammo_count = 6;
-	}
-	self.weapon = 4;
-	self.netname = "cells";
+		precache_model ("progs/world/world_ammo_gauss.md2");        //precache_model ("maps/b_batt0.bsp");
+		setmodel (self, "progs/world/world_ammo_gauss.md2");        //setmodel (self, "maps/b_batt0.bsp");
+		self.ammo_count = 20;
+
+	self.weapon = W_GAUSS;
+	self.netname = "ammo_cells";
 	setsize (self, '0 0 0', '32 32 56');
 	StartItem ();
 
 };
 
+// void() item_ammo_gauss =
+// {
+// 	if (deathmatch == 4)
+// 	{
+// 		remove(self);
+// 		return;
+// 	}
+
+// 	self.touch = ammo_touch;
+
+// 		precache_model ("maps/b_batt1.bsp");
+// 		setmodel (self, "maps/b_batt1.bsp");
+// 		self.ammo_count = 12;
+
+// 	self.weapon = 4;
+// 	self.netname = "ammo_gauss";
+// 	setsize (self, '0 0 0', '32 32 56');
+// 	StartItem ();
+
+// };
+
+void() item_ammo_cross_bow =
+{
+	if (deathmatch == 4)
+	{
+		remove(self);
+		return;
+	}
+
+	self.touch = ammo_touch;
+
+		precache_model ("progs/world/world_ammo_crossbow.md2");		//precache_model ("maps/b_nail1.bsp");
+		setmodel (self, "progs/world/world_ammo_crossbow.md2");		//setmodel (self, "maps/b_nail1.bsp");
+		self.ammo_count = 50;
+
+	self.weapon = W_CROSSBOW;
+	self.netname = "ammo_cross_bow";
+	setsize (self, '0 0 0', '32 32 56');
+	StartItem ();
+};
 
 /*QUAKED item_weapon (0 .5 .8) (0 0 0) (32 32 32) shotgun rocket spikes big
 DO NOT USE THIS!!!! IT WILL BE REMOVED!
@@ -998,33 +1164,33 @@ float WEAPON_ROCKET = 2;
 float WEAPON_SPIKES = 4;
 float WEAPON_MASK = 7;
 float WEAPON_BIG = 8;
-void() item_weapon =
-{
-	local float weap;
+// void() item_weapon =
+// {
+// 	local float weap;
 		
-	weap = self.spawnflags & WEAPON_MASK;
-	self.touch = ammo_touch;
+// 	weap = self.spawnflags & WEAPON_MASK;
+// 	self.touch = ammo_touch;
 
-	self.spawnflags = 0;
-	if (self.spawnflags & WEAPON_BIG)
+// 	self.spawnflags = 0;
+// 	if (self.spawnflags & WEAPON_BIG)
 
-		self.spawnflags |= WEAPON_BIG2;
+// 		self.spawnflags |= WEAPON_BIG2;
 
-	switch (weap)
-	{
-	case WEAPON_SHOTGUN:
-		self.classname = "item_shells";
-		item_shells();
-		return;
-	case WEAPON_SPIKES:
-		self.classname = "item_spikes";
-		item_spikes();
-		return;
-	case WEAPON_ROCKET:
-		self.classname = "item_rockets";
-		item_rockets();
-	}
-};
+// 	switch (weap)
+// 	{
+// 	case WEAPON_SHOTGUN:
+// 		self.classname = "item_ammo_super_blaster";
+// 		item_ammo_super_blaster();
+// 		return;
+// 	case WEAPON_SPIKES:
+// 		self.classname = "item_spikes";
+// 		item_spikes();
+// 		return;
+// 	case WEAPON_ROCKET:
+// 		self.classname = "item_ammo_rpg";
+// 		item_ammo_rpg();
+// 	}
+// };
 
 
 /*
@@ -1295,7 +1461,7 @@ void() powerup_touch =
 		{
 			other.armortype = 0;
 			other.armorvalue = 0;
-			other.ammo_cells_real = 0;
+			other.ammo_autogun_real = 0;
 			W_UpdateAmmoCounts(other);
 		}
 		other.super_time = 1;
@@ -1446,7 +1612,7 @@ void() BackpackTouch =
 				other.super_damage_finished = time + 30;
 				other.items = other.items | IT_QUAD;
 
-				other.ammo_cells_real = 0;
+				other.ammo_autogun_real = 0;
 				W_UpdateAmmoCounts(other);
 	
 				sound (other, CHAN_VOICE, "boss1/sight1.wav", 1, ATTN_NORM);
@@ -1460,10 +1626,10 @@ void() BackpackTouch =
 
 	sprint1 (other, PRINT_LOW, "You get ");
 
-	if ((other.items & self.items) == 0)
+	if ((other.weapons & self.weapons) == 0)
 	{
 		acount = 1;
-		sprint2 (other, PRINT_LOW, "the ", I_WeaponName(self.items));
+		sprint2 (other, PRINT_LOW, "the ", I_WeaponName(self.weapons));
 	}
  
 // if the player was using his best weapon, change up to the new one if better          
@@ -1473,16 +1639,16 @@ void() BackpackTouch =
 	self = stemp;
 
 // change weapons
-	other.ammo_shells_real = other.ammo_shells_real + self.ammo_shells;
-	other.ammo_nails_real = other.ammo_nails_real + self.ammo_nails;
-	other.ammo_rockets_real = other.ammo_rockets_real + self.ammo_rockets;
-	other.ammo_cells_real = other.ammo_cells_real + self.ammo_cells;
+	other.ammo_blaster_real = other.ammo_blaster_real + self.ammo_shells;
+	other.ammo_blaster_super_real = other.ammo_blaster_super_real + self.ammo_nails;
+	other.ammo_shotgun_real = other.ammo_shotgun_real + self.ammo_rockets;
+	other.ammo_autogun_real = other.ammo_autogun_real + self.ammo_cells;
 
-	new = self.items;
+	new = self.weapons;
 	if (!new)
 		new = other.weapon;
-	old = other.items;
-	other.items = other.items | self.items;
+	old = other.weapons;
+	other.weapons = other.weapons | self.weapons;
 	
 	bound_other_ammo ();
 
@@ -1523,8 +1689,8 @@ void() BackpackTouch =
 		acount = 1;
 	}
 	
-	if ( (deathmatch==3 || deathmatch == 5) & ( (WeaponCode(new)==6) || (WeaponCode(new)==7) ) & (other.ammo_rockets_real < 5) )
-		other.ammo_rockets_real = 5;
+	if ( (deathmatch==3 || deathmatch == 5) & ( (WeaponCode(new)==6) || (WeaponCode(new)==7) ) & (other.ammo_shotgun_real < 5) )
+		other.ammo_shotgun_real = 5;
 
 	sprint1 (other, PRINT_LOW, "\n");
 // backpack touch sound
@@ -1542,7 +1708,7 @@ void() BackpackTouch =
 	{
 		if (self.flags & FL_INWATER)
 		{
-			if (new != IT_LIGHTNING)
+			if (new != W_LINK)
 			{
 				Deathmatch_Weapon (old, new);
 			}
@@ -1563,18 +1729,25 @@ void() DropBackpack =
 {
 	local entity    item;
 
-	if (!(self.ammo_shells_real + self.ammo_nails_real + self.ammo_rockets_real + self.ammo_cells_real))
+	if (!(self.ammo_blaster_real + self.ammo_blaster_super_real + self.ammo_shotgun_real + self.ammo_autogun_real))
 		return; // nothing in it
 
 	item = spawn();
 	item.origin = self.origin - '0 0 24';
 	
-	item.items = self.weapon;
+	item.weapons = self.weapon;
 
-	item.ammo_shells = self.ammo_shells_real;
-	item.ammo_nails = self.ammo_nails_real;
-	item.ammo_rockets = self.ammo_rockets_real;
-	item.ammo_cells = self.ammo_cells_real;
+	item.ammo_blaster           = self.ammo_blaster_real;
+	item.ammo_blaster_super     = self.ammo_blaster_super_real;
+	item.ammo_shotgun           = self.ammo_shotgun_real;
+	item.ammo_autogun           = self.ammo_autogun_real;
+    item.ammo_autogun_grenades  = self.ammo_autogun_grenades_real;
+    item.ammo_rpg               = self.ammo_autogun_real;
+    item.ammo_cells              = self.ammo_cells_real;
+    item.ammo_cross_bow          = self.ammo_cross_bow_real;
+    item.ammo_tripmines         = self.ammo_tripmines_real;
+
+
 
 	item.velocity_z = 300;
 	item.velocity_x = -100 + (random() * 200);
@@ -1592,3 +1765,37 @@ void() DropBackpack =
 };
 
 
+void() longjump_touch = 
+{
+	if (other.classname != "player")
+	{
+		return;
+	}
+	if (other.health <= FREEMOVE)
+	{
+		return;
+	}
+	self.solid = SOLID_NOT;
+	other.items = other.items | self.items;
+	self.model = string_null;
+	sound(other, CHAN_AUTO, "fvox/powermove_on.wav", 1, ATTN_NORM);
+	other.longjump = 1;
+	if (deathmatch == 1)
+	{
+		self.nextthink = time + 60;
+	}
+	self.think = SUB_regen;
+	activator = other;
+	SUB_UseTargets();
+};
+
+void() item_long_jump = 
+{
+	self.touch = longjump_touch;
+	precache_sound("fvox/powermove_on.wav");
+	//precache_model("progs/world/wrld_longjump.mdl");
+	precache_model("progs/world/world_item_jet.md2");
+	setmodel(self, "progs/world/world_item_jet.md2");
+	setsize(self, VEC_ORIGIN, VEC_ORIGIN);
+	PlaceItem();
+};

@@ -33,13 +33,22 @@
 #endif
 #include "subs.qc"
 #include "engine.qc"
+#include "frikbot/bot_qw.qc"
+#include "frikbot/bot_way.qc"
+#include "frikbot/bot_fight.qc" 
+#include "frikbot/bot_ai.qc"
+#include "frikbot/bot_misc.qc"
+#include "frikbot/bot_phys.qc"
+#include "frikbot/bot_move.qc"
 #include "effects.qc"
 #include "obituary.qc"
 #include "combat.qc"
 #include "items.qc"
 #include "proj.qc"
-#include "weapons_attacks.qc"
 #include "weapons.qc"
+#include "weapon_attacks.qc"
+#include "weapon_impulses.qc"
+#include "weapon_frames.qc"
 #include "world.qc"
 #include "client.qc"
 #include "spectate.qc"
@@ -111,5 +120,7 @@
 #include "hl_pushable.qc"	// pushable brush models from nehahra
 #include "boss_killable.qc"	// killable chthon from beyond belief
 #endif
+
+#pragma sourcefile csqc/csprogs.src
 
 

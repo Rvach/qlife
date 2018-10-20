@@ -1,29 +1,3 @@
-// called by worldspawn
-void() W_Precache =
-{
-	precache_sound ("weapons/r_exp3.wav");  // new rocket explosion
-	precache_sound ("weapons/rocket1i.wav");        // spike gun
-	precache_sound ("weapons/sgun1.wav");
-	precache_sound ("weapons/guncock.wav"); // player shotgun
-	precache_sound ("weapons/ric1.wav");    // ricochet (used in c code)
-	precache_sound ("weapons/ric2.wav");    // ricochet (used in c code)
-	precache_sound ("weapons/ric3.wav");    // ricochet (used in c code)
-	precache_sound ("weapons/spike2.wav");  // super spikes
-	precache_sound ("weapons/tink1.wav");   // spikes tink (used in c code)
-	precache_sound ("weapons/grenade.wav"); // grenade launcher
-	precache_sound ("weapons/bounce.wav");          // grenade bounce
-	precache_sound ("weapons/shotgn2.wav"); // super shotgun
-
-    precache_sound ("misc/basekey.wav");    // Laser Trip Bomb activate sound
-    precache_sound ("sounds/weapons/deploy.wav");  // Laser Trip Bomb weapon sound
-    precache_model ("progs/WORLD/wrld_tripmine.mdl");         // Laser Trip Bomb model
-
-	precache_model("progs/laser.MDL"); // Laser for gauss
-	precache_sound("sounds/weapons/gauss2.wav"); // Laser for gauss
-}
-
-#define crandom() (2*(random()-0.5))
-
 /*
 ================
 W_FireAxe
@@ -56,39 +30,6 @@ void() W_FireAxe =
 
 		TE_gunshot(org);
 	}
-};
-
-
-//============================================================================
-
-/*
-================
-SpawnMeatSpray
-================
-*/
-void(vector org, vector vel) SpawnMeatSpray =
-{
-	local   entity missile;
-
-	missile = spawn ();
-	missile.owner = self;
-	missile.movetype = MOVETYPE_BOUNCE;
-	missile.solid = SOLID_NOT;
-
-	makevectors (self.angles);
-
-	missile.velocity = vel;
-	missile.velocity_z = missile.velocity_z + 250 + 50*random();
-
-	missile.avelocity = '3000 1000 2000';
-	
-// set missile duration
-	missile.nextthink = time + 1;
-	missile.think = SUB_Remove;
-
-	setmodel (missile, "progs/zom_gib.mdl");
-	setsize (missile, '0 0 0', '0 0 0');            
-	setorigin (missile, org);
 };
 
 /*
@@ -180,6 +121,7 @@ void(float damage, vector dir, INTEGER mod) TraceAttack =
 	}
 	else
 	{
+        TE_gunshot(org - v_forward*4);
 		puff_count = puff_count + 1;
 	}
 };
@@ -199,8 +141,8 @@ void(float shotcount, vector dir, vector spread, INTEGER mod) FireBullets =
 	
 	makevectors(self.v_angle);
 
-	src = self.origin + v_forward*10;
-	src_z = self.absmin_z + self.size_z * 0.7;
+	src = self.origin + self.view_ofs + v_forward*10; // src = self.origin + v_forward*10;
+	// src_z = self.absmin_z + self.size_z * 0.7;
 
 	ClearMultiDamage ();
 
@@ -222,6 +164,87 @@ void(float shotcount, vector dir, vector spread, INTEGER mod) FireBullets =
 
 /*
 ================
+FireBlast
+================
+*/
+void(float damage, vector dir, INTEGER mod) FireBlast =
+{
+	local   vector direction;
+	local   vector  src;
+	
+	makevectors(self.v_angle);
+
+	src = self.origin + self.view_ofs + v_forward*10; // src = self.origin + '0 0 16' + v_forward*10;
+	// src_z = self.absmin_z + self.size_z * 0.7;
+	dir = self.origin + '0 0 16' + v_forward * 10000000;
+
+	ClearMultiDamage ();
+
+    traceline(src, dir, 0, self);
+	if (trace_ent.health)
+	{
+		// self.hit_loc = HitLocation(trace_ent, trace_endpos); // Checn Headshots & other
+		T_Damage(trace_ent, self, self, damage, MOD_HLIFE);
+	}
+    else 
+    {
+        TE_gunshot(trace_endpos - v_forward*4);
+    }
+	puff_org = trace_endpos - dir*4;
+	
+	ApplyMultiDamage ();
+	Multi_Finish ();
+
+	// PRJ_FireProjectile(self, "progs/lavaball.mdl", trace_endpos, '0 0 0',0, 0, 0, 3); // stay time
+	// // T_RadiusDamage (trace_endpos, self.owner, 20, 10);
+        
+};
+/*
+================
+W_FireBlaster
+================
+*/
+void(float damage) W_FireBlaster =
+{
+	local vector dir;
+
+	sound (self, CHAN_WEAPON, "sounds/weapons/blaster.wav", 1, ATTN_NORM); 
+
+	VK_smallkick(self);
+	
+	if (deathmatch != 4)
+	{
+		self.ammo_blaster_real -= 1;
+		W_UpdateAmmoCounts(self);
+	}
+
+	dir = aim (self, 100000);
+	FireBlast (damage, dir, MOD_SHAFT);
+};
+/*
+================
+W_FireSuperBlaster
+================
+*/
+void(float damage) W_FireSuperBlaster =
+{
+	local vector dir;
+
+	sound (self, CHAN_WEAPON, "sounds/weapons/blaster_super.wav", 1, ATTN_NORM); 
+
+	VK_smallkick(self);
+	
+	if (deathmatch != 4)
+	{
+		self.ammo_blaster_super_real -= 1;
+		W_UpdateAmmoCounts(self);
+	}
+
+	dir = aim (self, 100000);
+	FireBlast (damage, dir, MOD_SHAFT);
+};
+/*
+================
 W_FireShotgun
 ================
 */
@@ -235,12 +258,12 @@ void() W_FireShotgun =
 	
 	if (deathmatch != 4)
 	{
-		self.ammo_shells_real -= 1;
+		self.ammo_shotgun_real -= 1;
 		W_UpdateAmmoCounts(self);
 	}
 
 	dir = aim (self, 100000);
-	FireBullets (6, dir, '0.04 0.04 0', MOD_SHOTGUN);
+	FireBullets (5, dir, '0.04 0.04 0', MOD_SHOTGUN);
 };
 
 
@@ -265,12 +288,12 @@ void() W_FireSuperShotgun =
 	
 	if (deathmatch != 4)
 	{
-		self.ammo_shells_real -= 2;
+		self.ammo_shotgun_real -= 2;
 		W_UpdateAmmoCounts(self);
 	}
 
 	dir = aim (self, 100000);
-	FireBullets (14, dir, '0.14 0.08 0', MOD_SUPERSHOTGUN);
+	FireBullets (25, dir, '0.14 0.08 0', MOD_SUPERSHOTGUN);
 };
 
 
@@ -287,27 +310,161 @@ ROCKETS
 W_FireRocket
 ================
 */
+void() RocketExplosion =
+{
+	te_spark(self.origin, '0 0 0', 150);
+	te_plasmaburn(self.origin);
+
+	self.movetype = MOVETYPE_NONE;
+	sound (self, CHAN_WEAPON, "weapons/r_exp3.wav", 1, ATTN_NORM);
+	self.velocity = '0 0 0';
+	self.touch = SUB_Null;
+	self.effects = self.effects + EF_ADDITIVE;
+	//setmodel (self, "progs/x_explod.spr");
+	self.solid = SOLID_NOT;
+	//x_explode1 ();
+                
+                PRJ_FireProjectile(self, 
+                    "progs/lavaball.mdl", 
+                    self.origin, 
+                    aim(self, 0) * 0,
+                    PE_EXPLOSION, 
+                    100+random()*20, 
+                    MOD_ROCKET, 
+                    0); // gauss splash delay
+                    remove(self);
+};
+
+void() T_MissileTouch =
+{
+	local float damg;
+
+	if (other == self.owner)
+		return;		// don't explode on owner, because that would suck
+
+	if (pointcontents(self.origin) == CONTENT_SKY)
+	{
+		remove(self);
+		return;
+	}
+
+	self.glow_size = 0;	//Else our fairly long sprite animation would look silly
+	damg = 100;
+
+	if (other.health)
+	{
+		if (other.classname == "monster_shambler")
+			damg = damg * 2;	// I'm such a radical
+		T_Damage (other, self, self.owner, damg );
+	}
+	
+	T_RadiusDamage (self, self.owner, damg, 300);
+
+	self.origin = self.origin - 8 * normalize(self.velocity);
+
+	RocketExplosion ();
+};
+
+entity() FindDot =
+{
+	local entity e, selected;
+
+if (self.owner.laser_active == 1)
+	{
+         		e = find( world, classname, "sight");
+			while (e)
+			{
+				if (e.classname == "sight" && e.owner == self.owner)
+				{
+				selected = e;
+				return e;
+				}
+			e = nextent(e);
+			}
+	}
+
+	return selected;
+};
+
+void() MissileThink =
+{
+        local vector dir, olddir;
+        local float turnrate;
+
+        turnrate = 0.5;	//Change as you wish // Rocket Turn Rate
+	if ( !(self.enemy) || (self.enemy == world) )
+		self.enemy = FindDot();
+
+	if (self.enemy != world)
+	{
+                olddir = normalize(self.velocity);
+		dir = normalize(self.enemy.origin - self.origin);
+                if (olddir_x - dir_x > turnrate)
+                        dir_x = olddir_x - turnrate;
+                if (olddir_x - dir_x < -1 * turnrate)
+                        dir_x = olddir_x + turnrate;
+                if (olddir_y - dir_y > turnrate)
+                        dir_y = olddir_y - turnrate;
+                if (olddir_y - dir_y < -1 * turnrate)
+                        dir_y = olddir_y + turnrate;
+                if (olddir_z - dir_z > turnrate)
+                        dir_z = olddir_z - turnrate;
+                if (olddir_z - dir_z < -1 * turnrate)
+                        dir_z = olddir_z + turnrate;
+                self.velocity = dir * 1500;
+		self.angles = vectoangles(self.velocity);
+	}
+
+	self.nextthink = time + 0.1;
+	self.think = MissileThink;
+};
+
+void() RocketFly =
+{
+	self.glow_size = 100;
+	self.glow_color = 254;
+	self.glow_trail = 1;
+	self.velocity = self.velocity * 5;
+
+	self.nextthink = time + 0.05;
+	self.think = MissileThink;
+};
+
 void() W_FireRocket =
 {
+	local	entity missile, mpuff;
+	
+	// self.currentammo = self.ammo_rockets = self.ammo_rockets - 1;
 	if (deathmatch != 4)
 	{
-		self.ammo_rockets_real -= 1;
+		self.ammo_rpg_real -= 1;
 		W_UpdateAmmoCounts(self);
 	}
 	
 	sound (self, CHAN_WEAPON, "weapons/sgun1.wav", 1, ATTN_NORM);
 
-	VK_smallkick(self);
-	PRJ_FireProjectile(self, 
-		"progs/missile.mdl", 
-		self.origin + v_forward*8 + '0 0 16', 
-		aim(self, 1000) * 1000,
-		PE_EXPLOSION, 
-		100+random()*20, 
-		MOD_ROCKET, 
-		5);
-	PRJ_SetRadiusDamage(120, 160, MOD_ROCKETRADIUS);
+	self.punchangle_x = -2;
+
+	missile = spawn ();
+	missile.owner = self;
+	missile.movetype = MOVETYPE_FLYMISSILE;
+	missile.solid = SOLID_BBOX;
+	missile.classname = "missile";
+		
+	makevectors (self.v_angle);
+	missile.velocity = aim(self, 1000);
+	missile.velocity = missile.velocity * 300;
+	missile.angles = vectoangles(missile.velocity);
+	
+	missile.touch = T_MissileTouch;
+	missile.nextthink = time + 0.5;
+	missile.think = RocketFly;
+
+	setmodel (missile, "progs/missile.mdl");
+	setsize (missile, '0 0 0', '0 0 0');		
+	setorigin (missile, self.origin + self.view_ofs - '0 0 8' + v_forward*8);
 };
+
 
 /*
 ===============================================================================
@@ -360,7 +517,7 @@ void(vector p1, vector p2, entity from, float damage, INTEGER lmod) LightningDam
 
 void() W_FireLightning =
 {
-	local   vector          org;
+	local   vector          org,dest;
 	local   float           cells;
 	local   INTEGER		expmod;
 
@@ -407,13 +564,13 @@ void() W_FireLightning =
 		W_UpdateAmmoCounts(self);
 	}
 
-	org = self.origin + '0 0 16';
-	
-	traceline (org, org + v_forward*600, TRUE, self);
+	org =  self.origin + self.view_ofs + v_forward*10; // self.origin + '0 0 16';
+	dest = self.origin + self.view_ofs + v_forward*600;
+	traceline (org, dest, TRUE, self);
 
-	TE_lightning2(self, org, trace_endpos);
+	TE_lightning2(self, org, trace_endpos); 
 
-	LightningDamage (self.origin, trace_endpos + v_forward*4, self, 30, MOD_SHAFT);
+	LightningDamage (org, trace_endpos + v_forward*4, self, 30, MOD_SHAFT);
 };
 
 /*
@@ -424,10 +581,15 @@ W_FireGrenade
 void() W_FireGrenade =
 {
 	local vector vel;
+    _bprint(ftos(self.ammo_autogun_grenades_real));
+        _bprint(" - ammo_autogun_grenades_real \n");
+    if(self.ammo_autogun_grenades_real < 1) {
+        return;
+    }
 
 	if (deathmatch != 4)
-	{
-		self.ammo_rockets_real -= 1;
+	{   
+		self.ammo_autogun_grenades_real -= 1;
 		W_UpdateAmmoCounts(self);
 	}
 	
@@ -442,7 +604,7 @@ void() W_FireGrenade =
 	}
 
 	VK_smallkick(self);
-	PRJ_FireProjectile(self, "progs/grenade.mdl", self.origin, vel, PE_EXPLOSIONGROUND, 0, 0, 2.5);
+	PRJ_FireProjectile(self, "progs/WORLD/grenade.md2", self.origin + self.view_ofs, vel, PE_EXPLOSIONGROUND, 0, 0, 2.5);
 	PRJ_SetRadiusDamage(120, 160, MOD_GRENADE);
 	PRJ_SetTouchNExplodeProjectile(); //PRJ_SetBouncyProjectile();
 
@@ -457,7 +619,7 @@ void() W_FireGrenade =
 //=============================================================================
 void(float ox) W_FireSpikes =
 {
-	if (self.ammo_nails_real < 1)
+	if (self.ammo_autogun_real < 1)
 	{
 		W_WeaponSwitch (W_BestWeapon ());
 		return;
@@ -466,14 +628,14 @@ void(float ox) W_FireSpikes =
 	sound (self, CHAN_WEAPON, "weapons/rocket1i.wav", 1, ATTN_NORM);
 	if (deathmatch != 4)
 	{
-		self.ammo_nails_real -= 1;
+		self.ammo_autogun_real -= 1;
 		W_UpdateAmmoCounts(self);
 	}
 
 	VK_smallkick(self);
 	PRJ_FireProjectile(self,
 		"progs/spike.mdl",
-		self.origin + '0 0 16' + v_right*ox,
+		self.origin + self.view_ofs + v_forward*10 + v_right*ox,// self.origin + '0 0 16' + v_right*ox,
 		aim(self, 1000) * 1000,
 		PE_SPIKE,
 		9,
@@ -483,7 +645,7 @@ void(float ox) W_FireSpikes =
 
 void() W_FireSuperSpikes =
 {
-	if (self.ammo_nails_real < 2)
+	if (self.ammo_autogun_real < 2)
 	{
 		W_FireSpikes(0);
 		return;
@@ -492,19 +654,30 @@ void() W_FireSuperSpikes =
 	sound (self, CHAN_WEAPON, "weapons/spike2.wav", 1, ATTN_NORM);
 	if (deathmatch != 4)
 	{
-		self.ammo_nails_real -= 2;
+		self.ammo_autogun_real -= 2;
 		W_UpdateAmmoCounts(self);
 	}
 
 	VK_smallkick(self);
 	PRJ_FireProjectile(self,
 		"progs/s_spike.mdl",
-		self.origin + '0 0 16',
+		self.origin + self.view_ofs + v_forward*10, // self.origin + '0 0 16',
 		aim(self, 1000) * 1000,
-		PE_SUPERSPIKE,
-		18,
+		PE_LASER,
+		1,  // DMG
 		MOD_SUPERSPIKE,
 		6);
+
+	local vector vec;
+	makevectors(self.v_angle);
+	self.currentammo = self.ammo_autogun = self.ammo_autogun - WEAPON_ROCKET;
+	vec = self.origin + '0 0 17' + v_right * WEAPON_SPIKES + v_forward * MENU_FLAGS2;
+	traceline(vec, self.origin + '0 0 17' + v_right * WEAPON_SPIKES + v_forward * 10000000, 0, self);
+	if (trace_ent.health)
+	{
+		// self.hit_loc = HitLocation(trace_ent, trace_endpos); // Checn Headshots & other
+		T_Damage(trace_ent, self, self, 5, MOD_HLIFE);
+	}
 };
 
 void() spike_touch;
@@ -609,7 +782,7 @@ void() W_FireLTB =
                 return;                         // can't stick to floor or slope....
         if (trace_ent != world)         // hit a door, monster etc.
                 return;
-        self.currentammo = self.ammo_nails = self.ammo_nails - 10;      // Take away 10 nails  
+        self.currentammo = self.ammo_tripmines = self.ammo_tripmines - 1;      // Take away 10 nails  
         lasertrip = spawn();            // Spawn a new dynamic entity
         lasertrip.owner = world;        // If the player is the owner he can't trigger it!
         lasertrip.enemy = self;         // Keep track of the owner to give him credit though
@@ -627,7 +800,7 @@ void() W_FireLTB =
         lasertrip.think = LTB_Arm_TripMine;              // Arm in one second
         lasertrip.nextthink = time + 1;
         lasertrip.attack_finished = time + 1;//Attack_finished keeps track of how long until it should re-draw the beam
-        setmodel (lasertrip, "progs/WORLD/wrld_tripmine.mdl");  // set the model
+        setmodel (lasertrip, "progs/WORLD/world_tripmine.md2");  // set the model
         setsize (lasertrip, '0 0 0', '0 0 0');  // See below            
 
         setorigin (lasertrip, trace_endpos);
@@ -679,18 +852,19 @@ void() W_firegauss_stage_two =
 	// sprint(self, "\n");
 };
 
-void(float ox) W_FireGauss = 
+void(float ox) W_FireGaussPrimary = 
 {
 	local vector vec;
 	makevectors(self.v_angle);
 	self.attack_finished = time + 0.2;
+	sound(self, CHAN_WEAPON, "sounds/weapons/tau_cannon_fire.wav", WEAPON_SHOTGUN, ATTN_NORM);
 	self.currentammo = self.ammo_cells = self.ammo_cells - WEAPON_ROCKET;
-	vec = self.origin + '0 0 17' + v_right * WEAPON_SPIKES + v_forward * MENU_FLAGS2;
-	traceline(vec, self.origin + '0 0 17' + v_right * WEAPON_SPIKES + v_forward * 10000000, 0, self);
+	vec = self.origin + self.view_ofs + v_forward*10 + v_right * WEAPON_SPIKES + v_forward * MENU_FLAGS2;
+	traceline(vec, self.origin + self.view_ofs + v_forward*10 + v_right * WEAPON_SPIKES + v_forward * 10000000, 0, self);
 	if (trace_ent.health)
 	{
 		// self.hit_loc = HitLocation(trace_ent, trace_endpos); // Checn Headshots & other
-		T_Damage(trace_ent, self, self, SVC_INTERMISSION * self.hit_loc, MOD_HLIFE);
+		T_Damage(trace_ent, self, self, 20, MOD_HLIFE);
 	}
 	self.vec_temp = vec;
 	self.trace_endpos_temp = trace_endpos - v_forward * WEAPON_SPIKES;
@@ -713,31 +887,29 @@ void(float ox) W_FireGaussSecondary =
 	local entity old;
 	local vector vec;
 	makevectors(self.v_angle);
-	local vector vecSrc =   self.origin + '0 0 16' + v_forward*8;
-    local vector vecDest =  self.origin + '0 0 16' + v_forward*10000000;
+	local vector vecSrc =   self.origin + self.view_ofs + v_forward*10;
+    local vector vecDest =  vecSrc + v_forward*10000000;
     float n;
 	if (self.ammo_cells < WEAPON_SHOTGUN)
 	{
 		self.weapon = W_BestWeapon();
 							self.currentammo = self.ammo_cells;
-							self.weaponmodel = "progs/v_nail2.mdl";
+							self.weaponmodel = "progs/v_gauss.mdl";
 							self.items = self.items | IT_CELLS;
 		return;
 	}
 	self.attack_finished = time + 0.2;
-	sound(self, CHAN_WEAPON, "sounds/weapons/gauss2.wav", WEAPON_SHOTGUN, ATTN_NORM);
+	sound(self, CHAN_WEAPON, "sounds/weapons/tau_cannon_fire.wav", WEAPON_SHOTGUN, ATTN_NORM);
 	self.currentammo = self.ammo_cells = self.ammo_cells - WEAPON_SHOTGUN;
     // vecSrc = self.origin + '0 0 17' + v_right * WEAPON_SPIKES + v_forward * MENU_FLAGS2;
     // vecDest = self.origin + '0 0 17' + v_right * WEAPON_SPIKES + v_forward * 10000000;
-    vecSrc =   self.origin + '0 0 16' + v_forward*8;
-    vecDest =  self.origin + '0 0 16' + v_forward*10000000;
 	
     traceline(vecSrc, vecDest, FALSE, self);
     vector trForward_endpos = trace_endpos;
     if (trace_ent.health)
 	{
 		// self.hit_loc = HitLocation(trace_ent, trace_endpos); // Checn Headshots & other
-		T_Damage(trace_ent, self, self, self.gausscharge * 15 * self.hit_loc, MOD_HLIFE);
+		T_Damage(trace_ent, self, self, 20 + 10 * self.charging_weapon * self.hit_loc, MOD_HLIFE);
 
         // do small radius dmg on hit point -----------------------------------------------------------------------------
         local entity dmg_small_gauss_radius;
@@ -765,8 +937,8 @@ void(float ox) W_FireGaussSecondary =
                 // if (n == 0) n = 1;
                 // flDamage -= n;
 
-                float damage_radius;
-                damage_radius = flDamage * 2.5;
+                // float damage_radius;
+                // damage_radius = flDamage * 2.5;
                 
                 // local entity dmg_gauss_radius;
                 // dmg_gauss_radius = spawn();
@@ -779,8 +951,8 @@ void(float ox) W_FireGaussSecondary =
                     PE_EXPLOSION, 
                     100+random()*20, 
                     MOD_ROCKET, 
-                    5);
-                PRJ_SetRadiusDamage(300, 300, MOD_ROCKETRADIUS);
+                    0); // gauss splash delay
+                PRJ_SetRadiusDamage(20 + 20 * self.charging_weapon, 100 + 100 * self.charging_weapon, MOD_ROCKETRADIUS); // DMG, RADIUS
                 
                 // ::RadiusDamage( beam_tr.vecEndPos + vecSrc * 8, pev, m_pPlayer->pev, flDamage, damage_radius, CLASS_NONE, DMG_BLAST );
 				//CSoundEnt::InsertSound ( bits_SOUND_COMBAT, pev->origin, NORMAL_EXPLOSION_VOLUME, 3.0 );
@@ -805,8 +977,12 @@ void(float ox) W_FireGaussSecondary =
 		// 	MOD_ROCKET, 
 		// 	5);
 		// PRJ_SetRadiusDamage(300, 300, MOD_ROCKETRADIUS);
+
+		// push player backwards
+		makevectors(self.v_angle);
+		self.velocity = self.velocity + (-1 * v_forward * self.charging_weapon * 100);
 	}
-	vec = self.origin + '0 0 17' + v_right * WEAPON_SPIKES + v_forward * MENU_FLAGS2;
+	vec = self.origin + self.view_ofs + v_forward*10 + v_right * WEAPON_SPIKES + v_forward * MENU_FLAGS2;
 	self.trace_endpos_temp = trForward_endpos - v_forward * WEAPON_SPIKES;
 	WriteByte(MSG_BROADCAST, SVC_TEMPENTITY);
 	WriteByte(MSG_BROADCAST, TE_LIGHTNING1);
@@ -824,6 +1000,16 @@ void(float ox) W_FireGaussSecondary =
 	self.think = W_firegauss_stage_two;
 	self.nextthink = time + GYRO_TURBULENCEMOD_AIR;
 };
+
+void() W_ChargeGauss = {
+	if(self.charging_weapon < 1) {
+		sound(self, CHAN_WEAPON, "sounds/weapons/tau_cannon_charging.wav", 5, ATTN_NORM);
+	}
+	if(self.charging_weapon <= 10) {
+		self.charging_weapon++;
+		self.currentammo = self.ammo_cells = self.ammo_cells - WEAPON_SHOTGUN;
+	}
+}
 
 /*
 ================
@@ -899,7 +1085,7 @@ void(float ox) W_FireGaussV2Secondary =
 		return;
 	}
 	self.attack_finished = time + 0.2;
-	sound(self, CHAN_WEAPON, "weapons/gauss2.wav", WEAPON_SHOTGUN, ATTN_NORM);
+	sound(self, CHAN_WEAPON, "weapons/tau_cannon_fire.wav", WEAPON_SHOTGUN, ATTN_NORM);
 	self.currentammo = self.ammo_cells = self.ammo_cells - WEAPON_SHOTGUN;
 	dir = aim(self, 1000);
 	gauss_secondary(self.origin + '0 8 16', dir);
@@ -1006,3 +1192,410 @@ void() superspike_touch =
 	remove(self);
 
 };
+
+/*
+============
+W_FireBow
+
+
+============
+*/
+void(float zoom_active) W_FireBow =
+{
+	if (self.ammo_cross_bow_real < 1)
+	{
+		W_WeaponSwitch (W_BestWeapon ());
+		return;
+	}
+
+	sound (self, CHAN_WEAPON, "sounds/weapons/bow_fire_arrow.wav", 1, ATTN_NORM);
+	if (deathmatch != 4)
+	{
+		self.ammo_cross_bow_real -= 1;
+		W_UpdateAmmoCounts(self);
+	}
+
+	VK_smallkick(self);
+    if(!zoom_active){
+        PRJ_FireProjectile(self,
+            "progs/spike.mdl",
+            self.origin + self.view_ofs + v_forward*10, // self.origin + '0 0 16',
+            aim(self, 1000) * 1000,
+            PE_EXPLOSION,
+            25,
+            MOD_SPIKE,
+            5);
+        PRJ_SetRadiusDamage(20, 100, MOD_ROCKETRADIUS); // DMG, RADIUS
+    } else {
+            local vector vec;
+            makevectors(self.v_angle);
+            self.attack_finished = time + 0.2;
+
+            self.currentammo = self.ammo_cross_bow = self.ammo_cross_bow - WEAPON_ROCKET;
+            vec = self.origin + self.view_ofs + v_right * WEAPON_SPIKES + v_forward * MENU_FLAGS2;
+            traceline(vec, self.origin + '0 0 17' + v_right * WEAPON_SPIKES + v_forward * 10000000, 0, self);
+            if (trace_ent.health)
+            {
+                //self.hit_loc = HitLocation(trace_ent, trace_endpos);
+                self.hit_loc = 1;
+                T_Damage(trace_ent, self, self, 100, MOD_HLIFE);
+            }
+            else {
+                TE_gunshot(trace_endpos - v_forward*4);
+            }
+    }
+
+};
+
+/*
+============
+W_Attack
+
+An attack impulse can be triggered now
+============
+*/
+void()	player_anim_axe1;
+void()	player_anim_shot1;
+void()	player_nail1;
+void()	player_nail2;
+void()	player_light1;
+void()	player_light2;
+void()	player_rocket1;
+void()	muzzleflash;
+
+void() W_Attack2 =
+{
+	float r;
+
+	if (!W_CheckNoAmmo ())
+		return;
+
+	makevectors (self.v_angle);                 // calculate forward angle for velocity
+	self.show_hostile = time + 1;   // wake monsters up
+
+	if (self.weaponstate == WS_IDLE) // start delay
+		self.delay = time + 0.1;
+
+	// animations are dealt with here
+	switch (self.weapon) 
+	{
+	// case IT_AXE:
+	// 	r = random();
+	// 	break;
+    case W_BLASTER:
+    case W_SUPER_BLASTER:
+		// self.weaponframe_time = time + 0.1;
+		// self.weaponframe = self.weaponframe + 3;
+        // if (self.weaponframe > 66)
+		// 	self.weaponframe = 56;
+        // else 
+        //     self.weaponframe = 56;
+        // break;
+    case W_SHOTGUN:
+        self.weaponframe = 0;
+		break;
+	case W_AUTOGUN:
+    	muzzleflash(); 
+		if (self.weaponframe == 0)
+			self.weaponframe = 0; // TO REDO temporarily off anim
+
+		if (self.weaponframe & 1)
+			player_nail1();
+		else
+			player_nail2();
+		break;	
+	case W_RPG:
+		self.weaponframe = 0;
+		muzzleflash();
+		player_rocket1();
+		break;
+	case W_LINK:
+		muzzleflash();
+		if (self.weaponframe == 0)
+		{
+			sound (self, CHAN_AUTO, "weapons/lstart.wav", 1, ATTN_NORM);
+			self.weaponframe = 1;
+		}
+
+		if (self.weaponframe & 1)
+			player_light1();
+		else
+			player_light2();
+		break;
+	case W_GAUSS:
+		self.weaponframe = 1;
+		muzzleflash();
+		player_rocket1();
+		break;
+	case W_CROSSBOW:
+
+	default:
+		muzzleflash();
+		self.weaponframe = 0;
+		// player_anim_shot1();
+	}
+
+	SuperDamageSound();
+
+	// firing is done here (r is used for round time instead of a temp here)
+	switch (self.weapon)
+	{
+        // case IT_AXE:
+        //     // frame handles most of this so skip most of it
+        //     sound (self, CHAN_WEAPON, "weapons/ax1.wav", 1, ATTN_NORM);
+        //     W_FireAxe();
+        //     r = 0.5;
+        //     break;
+        case W_BLASTER:
+            W_FireBlaster(10);
+            r = 0.75;
+            break;
+        case W_SUPER_BLASTER:
+            Zoom_Toggle();
+            r = 0.5;
+            break;
+        case W_SHOTGUN:
+            W_FireSuperShotgun ();
+            r = 1;
+            break;
+        case W_AUTOGUN:
+            W_FireGrenade();
+            r = 0.6;
+            break;
+        case W_RPG:
+            r = 0.2;
+            self.attack_finished = time + r;	//Don't ask
+            if (self.laser_active != 1)
+            {
+                SpawnLaser();
+            }
+            else
+            {
+                self.laser_active = 0;
+                // Find the sight entity and remove it
+                local entity e;
+                    e = find( world, classname, "sight");
+                while (e)
+                {
+                    if (e.classname == "sight" && e.owner == self)
+                    {
+                        remove(e);
+                        return;
+                    }
+                    e = nextent(e);
+                }
+            }
+            break;
+        case W_LINK:
+            W_FireLightning();
+            r = 0.1;
+            break;
+        case W_GAUSS:
+            W_ChargeGauss();
+            r = 0.1;
+            break;
+        case W_CROSSBOW:
+            Zoom_Toggle();
+            r = 0.5;
+            break;
+        case W_TRIPMINE:
+            player_rocket1();
+            W_FireLTB();    // Our deploy function
+            r = 0.8; // Wait a little
+            break;
+	}
+
+
+	if (self.weaponstate == WS_IDLE)
+		self.weaponstate = WS_FIRING1;
+
+	// advance attack time
+	if (self.attack_finished <= time)
+		self.attack_finished = self.attack_finished + r;
+};
+
+void() W_Attack =
+{
+	// check if not secondary attack
+	if (self.secondary_attack_mode == 1)
+	{
+		W_Attack2(); // use the other trigger
+		return;
+	}
+
+	float r;
+
+	if (!W_CheckNoAmmo ())
+		return;
+
+	makevectors (self.v_angle);                 // calculate forward angle for velocity
+	self.show_hostile = time + 1;   // wake monsters up
+
+	if (self.weaponstate == WS_IDLE) // start delay
+		self.delay = time + 0.1;
+
+	// animations are dealt with here
+	switch (self.weapon) 
+	{
+	// case IT_AXE:
+	// 	r = random();
+	// 	break;
+    case W_BLASTER:
+    case W_SUPER_BLASTER:
+		// self.weaponframe_time = time + 0.1;
+		// self.weaponframe = self.weaponframe + 3;
+        // if (self.weaponframe > 66)
+		// 	self.weaponframe = 56;
+        // else 
+        //     self.weaponframe = 56;
+        // break;
+    case W_SHOTGUN:
+        self.weaponframe = 0;
+		break;
+	case W_AUTOGUN:
+    	muzzleflash(); 
+		if (self.weaponframe == 0)
+			self.weaponframe = 0; // TO REDO temporarily off anim
+
+		if (self.weaponframe & 1)
+			player_nail1();
+		else
+			player_nail2();
+		break;	
+	case W_RPG:
+		self.weaponframe = 0;
+		muzzleflash();
+		player_rocket1();
+		break;
+	case W_LINK:
+		muzzleflash();
+		if (self.weaponframe == 0)
+		{
+			sound (self, CHAN_AUTO, "weapons/lstart.wav", 1, ATTN_NORM);
+			self.weaponframe = 1;
+		}
+
+		if (self.weaponframe & 1)
+			player_light1();
+		else
+			player_light2();
+		break;
+	case W_GAUSS:
+		self.weaponframe = 1;
+		muzzleflash();
+		player_rocket1();
+		break;
+	case W_CROSSBOW:
+
+	default:
+		muzzleflash();
+		self.weaponframe = 0;
+		// player_anim_shot1();
+	}
+
+	SuperDamageSound();
+
+	// firing is done here (r is used for round time instead of a temp here)
+	switch (self.weapon)
+	{
+        // case IT_AXE:
+        //     // frame handles most of this so skip most of it
+        //     sound (self, CHAN_WEAPON, "weapons/ax1.wav", 1, ATTN_NORM);
+        //     W_FireAxe();
+        //     r = 0.5;
+        //     break;
+        case W_BLASTER:
+            W_FireBlaster(10);
+            r = 0.4;
+            break;
+        case W_SUPER_BLASTER:
+            W_FireSuperBlaster(20);
+            r = 1;
+            break;
+        case W_SHOTGUN:
+            W_FireShotgun ();
+            r = 0.7;
+            break;
+        case W_AUTOGUN:
+            W_FireSuperSpikes();
+            r = 0.1;
+            break;
+        case W_RPG:
+            W_FireRocket();
+            r = 0.8;
+            break;
+        case W_LINK:
+            W_FireLightning();
+            r = 0.1;
+            break;
+        case W_GAUSS:
+            W_FireGaussPrimary(WEAPON_SPIKES);
+            //W_FireGaussV2Secondary(WEAPON_SPIKES);
+            r = 0.8;
+            break;
+        case W_CROSSBOW:
+            self.zooming == WM_UNINIT;
+            W_FireBow(self.zooming);
+            r = 1;
+            break;
+        case W_TRIPMINE:
+            player_rocket1();
+            W_FireLTB();    // Our deploy function
+            r = 0.8; // Wait a little
+            break;
+	}
+
+
+	if (self.weaponstate == WS_IDLE)
+		self.weaponstate = WS_FIRING1;
+
+	// advance attack time
+	if (self.attack_finished <= time)
+		self.attack_finished = self.attack_finished + r;
+};
+
+void() W_PostFireAction = {
+	float r;
+	dprint("W_PostFireAction\n");
+	if (!W_CheckNoAmmo ())
+		return;
+
+	makevectors (self.v_angle);                 // calculate forward angle for velocity
+	self.show_hostile = time + 1;   			// wake monsters up
+
+	if (self.weaponstate == WS_IDLE) 			// start delay
+		self.delay = time + 0.1;
+
+	// animations are dealt with here
+	switch (self.weapon) 
+	{
+		case W_GAUSS:
+			self.weaponframe = 1;
+			muzzleflash();
+			player_rocket1();
+			break;
+		default:								// return if weapon with no post action
+			return;
+	}
+
+	SuperDamageSound();
+
+	// firing is done here (r is used for round time instead of a temp here)
+	switch (self.weapon)
+	{
+        case W_GAUSS:
+            W_FireGaussSecondary(WEAPON_SPIKES);
+			//self.charging_weapon = 0;
+            //W_FireGaussV2Secondary(WEAPON_SPIKES);
+            r = 0.8;
+            break;
+	}
+
+
+	if (self.weaponstate == WS_IDLE)
+		self.weaponstate = WS_FIRING1;
+
+	// advance attack time
+	if (self.attack_finished <= time)
+		self.attack_finished = self.attack_finished + r;
+}

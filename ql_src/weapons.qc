@@ -24,8 +24,85 @@
 		Boston, MA  02111-1307, USA
 
 */
+// called by worldspawn
+void() W_Precache =
+{
+	precache_sound ("weapons/r_exp3.wav");  // new rocket explosion
+	precache_sound ("weapons/rocket1i.wav");        // spike gun
+	precache_sound ("weapons/sgun1.wav");
+	precache_sound ("weapons/guncock.wav"); // player shotgun
+	precache_sound ("weapons/ric1.wav");    // ricochet (used in c code)
+	precache_sound ("weapons/ric2.wav");    // ricochet (used in c code)
+	precache_sound ("weapons/ric3.wav");    // ricochet (used in c code)
+	precache_sound ("weapons/spike2.wav");  // super spikes
+	precache_sound ("weapons/tink1.wav");   // spikes tink (used in c code)
+	precache_sound ("weapons/grenade.wav"); // grenade launcher
+	precache_sound ("weapons/bounce.wav");          // grenade bounce
+	precache_sound ("weapons/shotgn2.wav"); // super shotgun
+
+    precache_sound ("misc/basekey.wav");    // Laser Trip Bomb activate sound
+    precache_sound ("sounds/weapons/deploy.wav");  // Laser Trip Bomb weapon sound
+    precache_model ("progs/WORLD/world_tripmine.md2");         // Laser Trip Bomb model
+
+	precache_model("progs/laser.MDL"); // Laser for gauss
+	precache_sound("sounds/weapons/tau_cannon_fire.wav"); 		// Laser for gauss
+	precache_sound("sounds/weapons/tau_cannon_charging.wav"); 	// Laser for gauss
+	precache_sound("sounds/weapons/bow_fire_arrow.wav"); 		// Laser for crossbow
+	precache_sound("sounds/weapons/blaster.wav"); 				// Blaster
+	precache_sound("sounds/weapons/blaster_super.wav"); 		// Super Blaster
+
+	precache_model("progs/w_blaster.md2");
+	precache_model("progs/w_blaster_super.md2");
+	precache_model("progs/w_shotgun.md2");
+    precache_model("progs/w_autogun.md2"); 	// auto firer model
+    precache_model("progs/w_rocket.md2"); 	// rpg model
+	precache_model("progs/w_link.md2"); 	// link model
+    precache_model("progs/w_gauss.md2"); 	// gauss model
+	precache_model("progs/w_crossbow.md2"); // crossbow model
+    precache_model("progs/w_tripmine.md2"); // tripmine model
+}
+
+void()	x_explode1	=	[0,	x_explode2] {};
+void()	x_explode2	=	[1,	x_explode3] {};
+void()	x_explode3	=	[2,	x_explode4] {};
+void()	x_explode4	=	[3,	x_explode5] {};
+void()	x_explode5	=	[4,	x_explode6] {};
+void()	x_explode6	=	[5,	x_explode7] {};
+void()	x_explode7	=	[6,	x_explode8] {};
+void()	x_explode8	=	[7,	x_explode9] {};
+void()	x_explode9	=	[8,	x_explode10] {};
+void()	x_explode10	=	[9,	x_explode11] {};
+void()	x_explode11	=	[10,	x_explode12] {};
+void()	x_explode12	=	[11,	x_explode13] {};
+void()	x_explode13	=	[12,	x_explode14] {};
+void()	x_explode14	=	[13,	x_explode15] {};
+void()	x_explode15	=	[14,	SUB_Remove] {};
+
+void()	smokepuff1	=	[0,	smokepuff2] {};
+void()	smokepuff2	=	[1,	smokepuff3] {};
+void()	smokepuff3	=	[2,	smokepuff4] {};
+void()	smokepuff4	=	[3,	smokepuff5] {};
+void()	smokepuff5	=	[4,	smokepuff6] {};
+void()	smokepuff6	=	[5,	smokepuff7] {};
+void()	smokepuff7	=	[6,	smokepuff8] {};
+void()	smokepuff8	=	[7,	smokepuff9] {};
+void()	smokepuff9	=	[8,	smokepuff10] {};
+void()	smokepuff10	=	[9,	smokepuff11] {};
+void()	smokepuff11	=	[10,	smokepuff12] {};
+void()	smokepuff12	=	[11,	smokepuff13] {};
+void()	smokepuff13	=	[12,	smokepuff14] {};
+void()	smokepuff14	=	[13,	smokepuff15] {};
+void()	smokepuff15	=	[14,	smokepuff16] {};
+void()	smokepuff16	=	[15,	smokepuff17] {};
+void()	smokepuff17	=	[16,	smokepuff18] {};
+void()	smokepuff18	=	[17,	smokepuff19] {};
+void()	smokepuff19	=	[18,	SUB_Remove] {};
+
+#define crandom() (2*(random()-0.5))
+
 void (entity targ, entity inflictor, entity attacker, float damage, INTEGER mod) T_Damage;
-void () player_run;
+void () player_anim_run;
+void ()  kkelad_anim_crouch;
 void(entity inflictor, entity attacker, float damage, float radius, entity ignore, INTEGER mod) T_RadiusDamage;
 void(vector org, float damage) SpawnBlood;
 void() SuperDamageSound;
@@ -38,35 +115,80 @@ void(entity ent) W_UpdateAmmoCounts =
 	// update current ammo
 	switch (ent.ammo_type)
 	{
-	case AT_SHELLS:
-		ent.currentammo = ent.ammo_shells_real;
-		break;
-	case AT_NAILS:
-		ent.currentammo = ent.ammo_nails_real;
-		break;
-	case AT_ROCKETS:
-		ent.currentammo = ent.ammo_rockets_real;
-		break;
-	case AT_CELLS:
-		ent.currentammo = ent.ammo_cells_real;
-		break;
-	default:
-		ent.currentammo = 0;
+        case AT_BLASTER:
+            ent.currentammo = ent.ammo_blaster_real;
+            break;
+        case AT_SUPER_BLASTER:
+            ent.currentammo = ent.ammo_blaster_super_real;
+            break;
+        case AT_SHOTGUN:
+            ent.currentammo = ent.ammo_shotgun_real;
+            break;
+        case AT_AUTOGUN:
+            ent.currentammo = ent.ammo_autogun_real;
+            break;
+        case AT_AUTOGUN_GRENADE:
+            ent.currentammo = ent.ammo_autogun_grenades_real;
+            break;
+         case AT_RPG:
+            ent.currentammo = ent.ammo_rpg_real;
+            break;
+         case AT_CELLS:
+            ent.currentammo = ent.ammo_cells_real;
+            break;
+         case AT_CROSSBOW:
+            ent.currentammo = ent.ammo_cross_bow_real;
+            break;
+         case AT_TRIPMINE:
+            ent.currentammo = ent.ammo_tripmines_real;
+            break;
+        default:
+            ent.currentammo = 0;
 	}
 	
 	// update ammo display (FTE progs converts to floats here)
-	ent.ammo_shells = ent.ammo_shells_real;
-	ent.ammo_nails = ent.ammo_nails_real;
-	ent.ammo_rockets = ent.ammo_rockets_real;
-	ent.ammo_cells = ent.ammo_cells_real;
+	ent.ammo_blaster            = ent.ammo_blaster_real;
+	ent.ammo_blaster_super      = ent.ammo_blaster_super_real;
+	ent.ammo_shotgun            = ent.ammo_shotgun_real;
+	ent.ammo_autogun            = ent.ammo_autogun_real;
+	ent.ammo_autogun_grenades   = ent.ammo_autogun_grenades_real;
+	ent.ammo_rpg                = ent.ammo_rpg_real;
+	ent.ammo_cells              = ent.ammo_cells_real;
+    ent.ammo_cross_bow           = ent.ammo_cross_bow_real;
+    ent.ammo_tripmines          = ent.ammo_tripmines_real;
+
 };
 
+void() Zoom_Reset = 
+{
+    self.zooming = WM_UNINIT;
+    // Restore Default FOV // TO DO : Find out how to properly save default zoom
+    stuffcmd(self, "fov 100\n");
+    // stuffcmd(self, "fov ");
+    // stuffcmd(self, ftos(self.zoom_off_fov));
+    // stuffcmd(self, "\n");
+}
 
-
-
-
-/*
-
+void() Zoom_Toggle = 
+{
+	if (self.weapon == W_CROSSBOW || self.weapon == W_SUPER_BLASTER)
+	{
+		if (self.zooming == WM_UNINIT)          // Enable Zoom
+		{
+            self.zoom_off_fov = cvar("fov");
+            self.zooming = WEAPON_SHOTGUN;
+			stuffcmd(self, "fov 30\n");
+		}
+		else if (self.zooming == WEAPON_SHOTGUN) // Disable Zoom
+		{
+            Zoom_Reset();
+		}
+	}
+	else
+	{
+        Zoom_Reset();
+	}
+};
 
 
 /*
@@ -81,21 +203,24 @@ float(float wep) W_HasAmmo =
 {
 	switch (wep)
 	{
-	case IT_SHOTGUN:
-		return self.ammo_shells_real >= 1;
-	case IT_SUPER_SHOTGUN:
-		return self.ammo_shells_real >= 2;
-	case IT_NAILGUN:
-		return self.ammo_nails_real >= 1;
-	case IT_SUPER_NAILGUN:
-		return self.ammo_nails_real >= 2;
-	case IT_GRENADE_LAUNCHER:
-	case IT_ROCKET_LAUNCHER:
-		return self.ammo_rockets_real >= 1;
-	case IT_LIGHTNING:
-		return self.ammo_cells_real >= 1;
-	case IT_EXTRA_WEAPON:
-		return self.ammo_cells_real >= 1;
+		case W_BLASTER:
+			return self.ammo_blaster_real >= 1;
+		case W_SUPER_BLASTER:
+			return self.ammo_blaster_super_real >= 1;
+		case W_SHOTGUN:
+			return self.ammo_shotgun_real >= 2;
+		case W_AUTOGUN:
+			return self.ammo_autogun_real >= 1;
+		case W_RPG:
+			return self.ammo_rpg_real >= 2;
+		case W_LINK:
+            return self.ammo_cells_real >= 1;
+		case W_GAUSS:
+			return self.ammo_cells_real >= 1 || self.charging_weapon > 0;;
+		case W_CROSSBOW:
+			return self.ammo_cross_bow_real >= 1;
+		case W_TRIPMINE:
+			return self.ammo_tripmines_real >= 1;
 	}
 
 	return TRUE;
@@ -103,60 +228,70 @@ float(float wep) W_HasAmmo =
 
 void() W_UpdateWeapon =
 {
-	player_run ();          // get out of any weapon firing states
+	player_anim_run ();              // get out of any weapon firing states
+    Zoom_Reset();              // reset zoom
 
-	self.items = self.items - ( self.items & (IT_SHELLS | IT_NAILS | IT_ROCKETS | IT_CELLS) );
+	self.items = self.items - ( self.items & (IT_AMMO_BLASTER | IT_AMMO_SUPER_BLASTER | IT_AMMO_SHOTGUN | IT_AMMO_AUTOGUN | IT_AMMO_RPG | IT_AMMO_CELLS | IT_AMMO_CROSS_BOW | IT_AMMO_TRIPMINES) );
     self.weaponframe = 0;
 	switch (self.weapon)
 	{
-	case IT_AXE:
-		self.weaponmodel = "progs/v_axe.mdl";
-		self.ammo_type = AT_NONE;
-                self.weaponframe = 7;
-		break;
-	case IT_SHOTGUN:
-		self.weaponmodel = "progs/v_9mm.MDL";
-		self.items = self.items | IT_SHELLS;
-		self.ammo_type = AT_SHELLS;
-        self.weaponframe = 124;
-		break;
-	case IT_SUPER_SHOTGUN:
-		self.weaponmodel = "progs/v_shot2.mdl";
-		self.items = self.items | IT_SHELLS;
-		self.ammo_type = AT_SHELLS;
-		break;
-	case IT_NAILGUN:
-		self.weaponmodel = "progs/v_tripmine.MDL";
-		self.items = self.items | IT_NAILS;
-		self.ammo_type = AT_NAILS;
-		break;
-	case IT_SUPER_NAILGUN:
-		self.weaponmodel = "progs/v_nail.MDL";
-		self.items = self.items | IT_NAILS;
-		self.ammo_type = AT_NAILS;
-		break;
-	case IT_GRENADE_LAUNCHER:
-		self.weaponmodel = "progs/v_nail.MDL";
-		self.items = self.items | IT_ROCKETS;
-		self.ammo_type = AT_ROCKETS;
-		break;
-	case IT_ROCKET_LAUNCHER:
-		self.weaponmodel = "progs/v_rpg.mdl";
-		self.items = self.items | IT_ROCKETS;
-		self.ammo_type = AT_ROCKETS;
-		break;
-	case IT_LIGHTNING:
-		self.weaponmodel = "progs/v_egon.mdl";
-		self.items = self.items | IT_CELLS;
-		self.ammo_type = AT_CELLS;
-		break;
-	case IT_EXTRA_WEAPON:
-		self.weaponmodel = "progs/v_nail2.mdl";
-		self.items = self.items | IT_CELLS;
-		self.ammo_type = AT_CELLS;
-		break;
-	default:
-		self.weaponmodel = "";
+		case W_BLASTER:
+			// self.weaponmodel = "progs/v_axe.mdl";
+			// self.ammo_type = AT_NONE;
+			//         self.weaponframe = 7;
+			self.weaponmodel = "progs/w_blaster.md2";
+			self.items = self.items | IT_AMMO_BLASTER;
+			self.ammo_type = AT_BLASTER;
+			// self.weaponframe = 124;
+			break;
+		case W_SUPER_BLASTER:
+			self.weaponmodel = "progs/w_blaster_super.md2";
+			self.items = self.items | IT_AMMO_SUPER_BLASTER;
+			self.ammo_type = AT_SUPER_BLASTER;
+			// self.weaponframe = 124;
+			break;
+		case W_SHOTGUN:
+			self.weaponmodel = "progs/w_shotgun.md2";
+			self.items = self.items | IT_AMMO_SHOTGUN;
+			self.ammo_type = AT_SHOTGUN;
+			break;
+		case W_AUTOGUN:
+			//self.weaponmodel = "progs/v_nail.MDL";
+            self.weaponmodel = "progs/w_autogun.md2";
+			self.items = self.items | IT_AMMO_AUTOGUN;
+			self.ammo_type = AT_AUTOGUN;
+			break;
+		case W_RPG:
+			//self.weaponmodel = "progs/v_rpg.mdl";
+            self.weaponmodel = "progs/w_rocket.md2";
+			self.items = self.items | IT_AMMO_RPG;
+			self.ammo_type = AT_RPG;
+			break;
+		case W_LINK:
+			//self.weaponmodel = "progs/v_egon.mdl";
+			self.weaponmodel = "progs/w_link.md2";
+			self.items = self.items | IT_AMMO_CELLS;
+			self.ammo_type = AT_CELLS;
+			break;
+		case W_GAUSS:
+			//self.weaponmodel = "progs/v_gauss.mdl";
+            self.weaponmodel = "progs/w_gauss.md2";
+			self.items = self.items | IT_AMMO_CELLS;
+			self.ammo_type = AT_CELLS;
+			break;
+		case W_CROSSBOW:
+			self.weaponmodel = "progs/w_crossbow.md2";
+			self.items = self.items | IT_AMMO_CROSS_BOW;
+			self.ammo_type = AT_CROSSBOW;
+			break;
+		case W_TRIPMINE:
+			//self.weaponmodel = "progs/v_tripmine.MDL";
+            self.weaponmodel = "progs/w_tripmine.md2";
+			self.items = self.items | IT_AMMO_TRIPMINES;
+			self.ammo_type = AT_TRIPMINE;
+			break;
+		default:
+			self.weaponmodel = "";
 	}
 };
 
@@ -178,37 +313,44 @@ float() W_BestWeapon =
 	float fl;
 
 	if (self.waterlevel <= 1)
-		fl = IT_LIGHTNING;
+		fl = W_LINK;
 	else
-		fl = IT_SUPER_NAILGUN;
+		fl = W_BLASTER;
 
 	while (1)
 	{
-		if ( (self.items & fl) && W_HasAmmo(fl) )
+		if ( (self.weapons & fl) && W_HasAmmo(fl) )
 			return fl;
 
 		// best weapon order
 		switch (fl)
 		{
-        case IT_EXTRA_WEAPON:
-			fl = IT_LIGHTNING;
-			break;
-		case IT_LIGHTNING:
-			fl = IT_SUPER_NAILGUN;
-			break;
-		case IT_SUPER_NAILGUN:
-			fl = IT_SUPER_SHOTGUN;
-			break;
-		case IT_SUPER_SHOTGUN:
-			fl = IT_NAILGUN;
-			break;
-		case IT_NAILGUN:
-			fl = IT_SHOTGUN;
-			break;
-		case IT_SHOTGUN:
-		default:
-			return IT_AXE; // so we don't get an infinite loop with certain engines
+			case W_TRIPMINE:
+				fl = W_GAUSS;
+				break;
+			case W_GAUSS:
+				fl = W_LINK;
+				break;
+			case W_LINK:
+				fl = W_CROSSBOW;
+				break;
+			case W_CROSSBOW:
+				fl = W_RPG;
+				break;
+			case W_RPG:
+				fl = W_AUTOGUN;
+				break;
+			case W_AUTOGUN:
+				fl = W_SHOTGUN;
+				break;
+			case W_SHOTGUN:
+				fl = W_SUPER_BLASTER;
+				break;
+			case W_SUPER_BLASTER:
+			default:
+				return W_BLASTER; // so we don't get an infinite loop with certain engines
 		}
+		//return fl;
 	}
 };
 
@@ -217,181 +359,13 @@ float() W_CheckNoAmmo =
 	if (self.currentammo > 0)
 		return TRUE;
 
-	if (self.weapon == IT_AXE)
+	if (self.weapon == W_BLASTER)
 		return TRUE;
 	
 	W_WeaponSwitch (W_BestWeapon ());
 	
 // drop the weapon down
-	return FALSE;
-};
-
-/*
-============
-W_Attack
-
-An attack impulse can be triggered now
-============
-*/
-void()	player_axe1;
-void()	player_axeb1;
-void()	player_axec1;
-void()	player_axed1;
-void()	player_shot1;
-void()	player_nail1;
-void()	player_nail2;
-void()	player_light1;
-void()	player_light2;
-void()	player_rocket1;
-void()	muzzleflash;
-
-void() W_Attack =
-{
-	float r;
-
-	if (!W_CheckNoAmmo ())
-		return;
-
-	makevectors (self.v_angle);                 // calculate forward angle for velocity
-	self.show_hostile = time + 1;   // wake monsters up
-
-	if (self.weaponstate == WS_IDLE) // start delay
-		self.delay = time + 0.1;
-
-	// animations are dealt with here
-	switch (self.weapon) 
-	{
-	case IT_AXE:
-		r = random();
-		// if (r < 0.25)
-		// {
-		// 	self.weaponframe = 1;
-		// 	player_axe1 ();
-		// }
-		// else if (r < 0.5)
-		// {
-		// 	self.weaponframe = 5;
-		// 	player_axeb1 ();
-		// }
-		// else if (r < 0.75)
-		// {
-		// 	self.weaponframe = 1;
-		// 	player_axec1 ();
-		// }
-		// else
-		// {
-		// 	self.weaponframe = 5;
-		// 	player_axed1 ();
-		// }
-		self.weaponframe_time = time + 0.1;
-		self.weaponframe = self.weaponframe + 1;
-        if (self.weaponframe > 28)
-			self.weaponframe = 19;
-        else 
-            self.weaponframe = 19;
-		break;
-    case IT_SHOTGUN:
-		self.weaponframe_time = time + 0.1;
-		self.weaponframe = self.weaponframe + 3;
-        if (self.weaponframe > 66)
-			self.weaponframe = 56;
-        else 
-            self.weaponframe = 56;
-		break;
-	case IT_NAILGUN:
-	case IT_SUPER_NAILGUN:
-		muzzleflash(); 
-		if (self.weaponframe == 0)
-			self.weaponframe = 0; // TO REDO temporarily off anim
-
-		if (self.weaponframe & 1)
-			player_nail1();
-		else
-			player_nail2();
-		break;		
-	case IT_GRENADE_LAUNCHER:
-		self.weaponframe = 0;
-		muzzleflash();
-		player_rocket1();
-		break;
-	case IT_ROCKET_LAUNCHER:
-		self.weaponframe = 1;
-		muzzleflash();
-		player_rocket1();
-		break;
-	case IT_LIGHTNING:
-		muzzleflash();
-		if (self.weaponframe == 0)
-		{
-			sound (self, CHAN_AUTO, "weapons/lstart.wav", 1, ATTN_NORM);
-			self.weaponframe = 1;
-		}
-
-		if (self.weaponframe & 1)
-			player_light1();
-		else
-			player_light2();
-		break;
-	default:
-		muzzleflash();
-		self.weaponframe = 1;
-		player_shot1();
-	}
-
-	SuperDamageSound();
-
-	// firing is done here (r is used for round time instead of a temp here)
-	switch (self.weapon)
-	{
-	case IT_AXE:
-		// frame handles most of this so skip most of it
-		sound (self, CHAN_WEAPON, "weapons/ax1.wav", 1, ATTN_NORM);
-        W_FireAxe();
-		r = 0.5;
-		break;
-	case IT_SHOTGUN:
-		W_FireShotgun ();
-		r = 0.4;
-		break;
-	case IT_SUPER_SHOTGUN:
-		W_FireSuperShotgun ();
-		r = 0.7;
-		break;
-	case IT_NAILGUN:
-        player_rocket1();
-        W_FireLTB();    // Our deploy function
-		r = 0.8; // Wait a little
-		break;
-	case IT_SUPER_NAILGUN:
-		W_FireSuperSpikes();
-		r = 0.1;
-		break;
-	case IT_GRENADE_LAUNCHER:
-		W_FireGrenade();
-		r = 0.6;
-		break;
-	case IT_ROCKET_LAUNCHER:
-		W_FireRocket();
-		r = 0.8;
-		break;
-	case IT_LIGHTNING:
-		W_FireLightning();
-		r = 0.1;
-		break;
-    case IT_EXTRA_WEAPON:
-		W_FireGaussSecondary(WEAPON_SPIKES);
-		//W_FireGaussV2Secondary(WEAPON_SPIKES);
-		r = 0.8;
-		break;
-	}
-
-
-	if (self.weaponstate == WS_IDLE)
-		self.weaponstate = WS_FIRING1;
-
-	// advance attack time
-	if (self.attack_finished <= time)
-		self.attack_finished = self.attack_finished + r;
+	return FALSE || self.charging_weapon > 0;
 };
 
 /*
@@ -407,36 +381,36 @@ void() W_ChangeWeapon =
 	switch (self.impulse)
 	{
 	case 1:
-		fl = IT_AXE;
+		fl = W_BLASTER;
 		break;
 	case 2:
-		fl = IT_SHOTGUN;
+		fl = W_SUPER_BLASTER;
 		break;
 	case 3:
-		fl = IT_SUPER_SHOTGUN;
+		fl = W_SHOTGUN;
 		break;
 	case 4:
-		fl = IT_NAILGUN;
+		fl = W_AUTOGUN;
 		break;
 	case 5:
-		fl = IT_SUPER_NAILGUN;
+		fl = W_RPG;
 		break;
 	case 6:
-		fl = IT_GRENADE_LAUNCHER;
+		fl = W_LINK;
 		break;
 	case 7:
-		fl = IT_ROCKET_LAUNCHER;
+		fl = W_GAUSS;
 		break;
 	case 8:
-		fl = IT_LIGHTNING;
+		fl = W_CROSSBOW;
 		break;
     case 9: 
-        fl = IT_EXTRA_WEAPON;
+        fl = W_TRIPMINE;
         break;
 	}
 	
 	
-	if (!(self.items & fl))
+	if (!(self.weapons & fl))
 	{       // don't have the weapon or the ammo
 		sprint1 (self, PRINT_HIGH, "no weapon.\n");
 		return;
@@ -465,22 +439,22 @@ void() CheatCommand =
       if (deathmatch || coop)
 		return;
 
-	self.ammo_rockets_real = 100;
-	self.ammo_nails_real = 200;
-	self.ammo_shells_real = 100;
-	self.ammo_cells_real = 100;
-	self.items |= IT_AXE |
-		IT_SHOTGUN |
-		IT_SUPER_SHOTGUN |
-		IT_NAILGUN |
-		IT_SUPER_NAILGUN |
-		IT_GRENADE_LAUNCHER |
-		IT_ROCKET_LAUNCHER |
-		IT_LIGHTNING |
-        IT_EXTRA_WEAPON |
+	self.ammo_shotgun_real = 100;
+	self.ammo_blaster_super_real = 200;
+	self.ammo_blaster_real = 100;
+	self.ammo_autogun_real = 100;
+	self.weapons |= W_BLASTER |
+		W_SUPER_BLASTER |
+		W_SHOTGUN |
+		W_AUTOGUN |
+		W_RPG |
+		W_LINK |
+		W_GAUSS |
+		W_CROSSBOW |
+        W_TRIPMINE |
 		IT_KEY1 | IT_KEY2;
 
-	W_WeaponSwitch (IT_ROCKET_LAUNCHER);
+	W_WeaponSwitch (W_GAUSS);
 };
 
 /*
@@ -499,38 +473,38 @@ void() CycleWeaponCommand =
 	{
 		switch (w)
 		{
-		case IT_EXTRA_WEAPON:
-			w = IT_AXE;
+		case W_TRIPMINE:
+			w = W_BLASTER;
 			break;
-		case IT_AXE:
-			w = IT_SHOTGUN;
+		case W_BLASTER:
+			w = W_SUPER_BLASTER;
 			break;
-		case IT_SHOTGUN:
-			w = IT_SUPER_SHOTGUN;
+		case W_SUPER_BLASTER:
+			w = W_SHOTGUN;
 			break;
-		case IT_SUPER_SHOTGUN:
-			w = IT_NAILGUN;
+		case W_SHOTGUN:
+			w = W_AUTOGUN;
 			break;
-		case IT_NAILGUN:
-			w = IT_SUPER_NAILGUN;
+		case W_AUTOGUN:
+			w = W_RPG;
 			break;
-		case IT_SUPER_NAILGUN:
-			w = IT_GRENADE_LAUNCHER;
+		case W_RPG:
+			w = W_LINK;
 			break;
-		case IT_GRENADE_LAUNCHER:
-			w = IT_ROCKET_LAUNCHER;
+		case W_LINK:
+			w = W_GAUSS;
 			break;
-		case IT_ROCKET_LAUNCHER:
-			w = IT_LIGHTNING;
+		case W_GAUSS:
+			w = W_CROSSBOW;
 			break;
-		case IT_LIGHTNING:
-			w = IT_EXTRA_WEAPON;
+		case W_CROSSBOW:
+			w = W_TRIPMINE;
 			break;
 		}
 
 
 	
-		if ( (self.items & w) && W_HasAmmo(w) )
+		if ( (self.weapons & w) && W_HasAmmo(w) )
 		{
 			W_WeaponSwitch (w);
 			return;
@@ -556,36 +530,36 @@ void() CycleWeaponReverseCommand =
 	{
 		switch (w)
 		{
-        case IT_EXTRA_WEAPON:
-			w = IT_LIGHTNING;
+        case W_TRIPMINE:
+			w = W_CROSSBOW;
 			break;
-		case IT_LIGHTNING:
-			w = IT_ROCKET_LAUNCHER;
+		case W_CROSSBOW:
+			w = W_GAUSS;
 			break;
-		case IT_ROCKET_LAUNCHER:
-			w = IT_GRENADE_LAUNCHER;
+		case W_GAUSS:
+			w = W_LINK;
 			break;
-		case IT_GRENADE_LAUNCHER:
-			w = IT_SUPER_NAILGUN;
+		case W_LINK:
+			w = W_RPG;
 			break;
-		case IT_SUPER_NAILGUN:
-			w = IT_NAILGUN;
+		case W_RPG:
+			w = W_AUTOGUN;
 			break;
-		case IT_NAILGUN:
-			w = IT_SUPER_SHOTGUN;
+		case W_AUTOGUN:
+			w = W_SHOTGUN;
 			break;
-		case IT_SUPER_SHOTGUN:
-			w = IT_SHOTGUN;
+		case W_SHOTGUN:
+			w = W_SUPER_BLASTER;
 			break;
-		case IT_SHOTGUN:
-			w = IT_AXE;
+		case W_SUPER_BLASTER:
+			w = W_BLASTER;
 			break;
-		case IT_AXE:
-			w = IT_EXTRA_WEAPON;
+		case W_BLASTER:
+			w = W_TRIPMINE;
 			break;
 		}
 	
-		if ( (self.items & w) && W_HasAmmo(w) )
+		if ( (self.weapons & w) && W_HasAmmo(w) )
 		{
 			W_WeaponSwitch (w);
 			return;
@@ -670,207 +644,57 @@ void (entity t_src) FindEntities =
 };
 #endif
 
-
 /*
 ============
-ImpulseCommands
-
+Weapon Fire Modes Section
 ============
 */
-void () parse_hl_crap;
-void (float do_mats, string s1, string s2) parse_hl_map;
-void (string s1, string s2, string s3) hl_swap_ents;
-void () hl_batch_convert;
-void() ImpulseCommands =
+void() W_ToggleFireMode =
 {
-	local entity test;
-	local string mname;
-	mname = "c1a4b";
-	
-	switch (self.impulse) {
-	case 1 .. 9:
-		W_ChangeWeapon ();
-		break;
-	case 10:
-		CheatCommand ();
-		break;
-	case 11:
-		CycleWeaponCommand ();
-		break;
-	case 12:
-		ServerflagsCommand ();
-		break;
-	case 13:
-		CycleWeaponReverseCommand ();
-		break;
-#ifdef HALFLIFE
-	case 102:
-        if(self.crouchflags != #CROUCH_ON) {
-            setsize(self, VEC_HULL_MIN, '16 16 18');
-            self.crouchflags = #CROUCH_ON;
-            self.view_ofs_z = 18;  
-        } else {
-            self.crouchflags = #CROUCH_TRYSTAND;
-        }
-		break;
-	case 103:
-		self.crouchflags = #CROUCH_TRYSTAND;
-		break;
-	case 104:
-		FindUseEntity(self, 0);
-		break;
-	case 105:
-		FindEntities(self);
-		break;
-	case 106:
-		_bprint(vtos(self.origin), "\n");
-		break;
-	case 107:
-		FindUseEntity(self, 1);
-		break;
-	case 109:
-		parse_hl_crap();
-		break;
-	case 110:
-		test = find(world, classname, "trigger_once");
-		while (test)
-		{
-			if (test.target == "retinalscan") {
-				//_bprint("I EXIST at", vtos(self.origin), "\n");
-				setorigin(self, (test.absmax+test.absmin)*.5);
-			}
-			test = find(test, classname, "trigger_once");
-		}
-		break;
-	case 120:
-		FindUseEntity(self, 2);
-		break;
-	case 121:
-		parse_hl_map(1, mname, mname);
-		break;
-	case 122:
-		hl_swap_ents(mname,mname,mname);
-		break;
-	case 123:
-		_bprint(" no mats being parsed\n");
-		parse_hl_map(0, "toconv", "toconv");
-		break;
-	case 124:
-		hl_batch_convert();
-		break;
-#endif
-	}
-
-	self.impulse = 0;
-};
-
-/*
-============
-W_HandlePlayerFrame
-
-Handle player weapon model
-============
-*/
-void() W_HandlePlayerFrame =
-{
-	if (!self.weaponframe)
-		return;
-
-	if (self.weaponframe_time >= time)
-		return;
-
-	switch (self.weapon)
+	if (self.secondary_attack_mode == 0)
 	{
-	case IT_AXE:
-		// axe frames can start at 1 or 5
-		self.weaponframe_time = time + 0.1;
-		self.weaponframe = self.weaponframe + 1;
-		if (self.weaponframe > 12)
-			self.weaponframe = 8;
+		self.secondary_attack_mode = 1; // now put it on the other trigger
+		centerprint(self,"Secondary Mode\n"); // let him know without clogging the console with unsubliminal messages
 		return;
-    case IT_SHOTGUN:
-		self.weaponframe_time = time + 0.1;
-		self.weaponframe = self.weaponframe + 1;
-        if (self.weaponframe > 73)
-			self.weaponframe = 63;
-        else 
-            self.weaponframe = 63;
+	}
+	if (self.secondary_attack_mode == 1)
+	{
+		self.secondary_attack_mode = 0; // ditto
+		centerprint(self,"Primary Mode\n");
 		return;
-	case IT_NAILGUN:
-	case IT_SUPER_NAILGUN:
-		// cycle until fire button is released
-		if (self.weaponstate != WS_IDLE)
- 		{
-			self.weaponframe_time = time + 0.1;
-  			self.weaponframe = self.weaponframe + 1;
-  			if (self.weaponframe > 8)
-  				self.weaponframe = 1;
-  		}
-  		else
-  			self.weaponframe = 0;
-
-		return;
-	case IT_LIGHTNING:
-		// cycle until fire button is released
-		if (self.weaponstate != WS_IDLE)
-		{
-			self.weaponframe_time = time + 0.1;
-			self.weaponframe = self.weaponframe + 1;
-			if (self.weaponframe > 4)
-				self.weaponframe = 1;
-		}
-		else
-			self.weaponframe = 0;
-		return;
-	default:
-		self.weaponframe = self.weaponframe + 1;
-		self.weaponframe_time = time + 0.1;
-		if (self.weaponframe > 6)
-			self.weaponframe = 0;
 	}
 };
 
+//============================================================================
+
 /*
-============
-W_WeaponFrame
-
-Called every frame so impulse events can be handled as well as possible
-============
+================
+SpawnMeatSpray
+================
 */
-void() W_WeaponFrame =
+void(vector org, vector vel) SpawnMeatSpray =
 {
-	local INTEGER scount;
+	local   entity missile;
 
-	W_HandlePlayerFrame();
+	missile = spawn ();
+	missile.owner = self;
+	missile.movetype = MOVETYPE_BOUNCE;
+	missile.solid = SOLID_NOT;
 
-	if (time < self.attack_finished)
-		return;
+	makevectors (self.angles);
 
-	if (self.impulse)
-		ImpulseCommands ();
+	missile.velocity = vel;
+	missile.velocity_z = missile.velocity_z + 250 + 50*random();
+
+	missile.avelocity = '3000 1000 2000';
 	
-// check for attack
-	if (self.button0)
-	{
-		scount = 0;
-		// play catchup but don't allow more than 4 shots per frame
-		while (self.attack_finished <= time)
-		{
-			if (scount >= 4)
-			{
-				self.attack_finished = time;
-				break;
-			}
+// set missile duration
+	missile.nextthink = time + 1;
+	missile.think = SUB_Remove;
 
-			W_Attack();
-			scount++;
-		}
-	}
-	else
-	{
-		self.attack_finished = time;
-		self.weaponstate = WS_IDLE;
-	}
+	setmodel (missile, "progs/zom_gib.mdl");
+	setsize (missile, '0 0 0', '0 0 0');            
+	setorigin (missile, org);
 };
 
 /*
@@ -919,3 +743,67 @@ void() testfunction =
 		return;
 };
 */
+
+void(vector org) SpawnSmoke =	//Spawns a puff of smoke
+{
+	newmis = spawn();
+	newmis.movetype = MOVETYPE_NONE;
+	newmis.classname = "smoke";
+	newmis.touch = SUB_Null;
+	newmis.velocity = '0 0 0';  //Note that you could mess with the movetype and give it a z velocity for rising smoke..
+	newmis.effects = newmis.effects | EF_ADDITIVE;
+	setmodel(newmis, "progs/smokepuff.spr");
+	newmis.solid = SOLID_NOT;
+	setsize(newmis, '0 0 0', '0 0 0');
+	setorigin(newmis, org);
+	newmis.think = smokepuff1;
+	newmis.nextthink = time + 0.1;
+};
+
+void () LaserThink =		//Updates the laserdot position - this should be done with velocity
+{				// instead of changing the origin, but I'm tired..
+	local vector org;
+
+        makevectors(self.owner.v_angle);
+	org = self.owner.origin + self.owner.view_ofs; //self.owner.origin + v_up * 18;
+
+        traceline (org, org + v_forward * 4096, FALSE, self);	//Should be higher
+
+	if (self.owner.weapon != W_RPG)		//Laser only works with our l'cher
+		{
+		self.owner.laser_active = 0;			//Tells Quake our laser is off
+		remove(self);
+		}
+
+        if (trace_fraction == 1.0)
+	{
+		// Move sight inside player if something strange happens
+        	setorigin(self, self.owner.origin + self.owner.view_ofs );
+		return;
+	}
+
+	self.angles = vectoangles(v_forward);		//Make sure the sprite looks right
+	setorigin(self, trace_endpos - v_forward*4);	//Also make sure it doesn't end up in a wall
+	self.nextthink = time + 0.05;
+};
+
+void ()	SpawnLaser =		//Spawns a rocket guidance laser for a player
+{
+	local entity foo;
+
+        self.laser_active = 1;	//Laser is active
+
+	foo = spawn ();
+	foo.owner = self;
+	foo.movetype = MOVETYPE_NOCLIP;
+	foo.solid = SOLID_NOT;
+
+	setmodel (foo, "progs/laserdot.spr");
+	foo.classname = "sight";
+	foo.effects = foo.effects | EF_ADDITIVE;
+
+	setorigin( foo, self.origin + self.view_ofs );
+
+	foo.think = LaserThink;
+	foo.nextthink = time + 0.05;	//Change this as you please
+};

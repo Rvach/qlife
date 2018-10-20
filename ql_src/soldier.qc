@@ -276,7 +276,7 @@ void() monster_army =
 	self.th_pain = army_pain;
 	self.th_die = army_die;
 
-	self.ammo_shells_real = 5; // drop 5 shells on death
+	self.ammo_blaster_real = 5; // drop 5 shells on death
 
 	walkmonster_start ();
 };

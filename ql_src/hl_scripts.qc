@@ -65,7 +65,7 @@ void () scripted_sequence_use =
 			newmt.classname = "script_corner";
 			newmt.netname = "script_path";
 			newmt.solid = SOLID_TRIGGER;
-			//setmodel(newmt, "progs/player.mdl");
+			//setmodel(newmt, "progs/kkelad.md2");
 			setsize (newmt, VEC_HULL_MIN, VEC_HULL_MAX );//'-8 -8 -8', '8 8 8');
 			newmt.enemy = targ;
 			newmt.touch = script_path_remove;

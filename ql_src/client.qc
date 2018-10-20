@@ -28,7 +28,8 @@
 void () W_WeaponFrame;
 void (float weap) W_WeaponSwitch;
 void() player_pain;
-void() player_stand1;
+void() player_anim_stand1;
+void () kkelad_anim_crouch;
 void (vector org) spawn_tfog;
 void (vector org, entity death_owner) spawn_tdeath;
 
@@ -75,28 +76,40 @@ void() SetChangeParms =
 	parm1 = self.items;
 	parm2 = self.health;
 	parm3 = self.armorvalue;
-	if (self.ammo_shells_real < 25)
+	if (self.ammo_blaster_real < 25)
 		parm4 = 25;
 	else
-		parm4 = self.ammo_shells_real;
-	parm5 = self.ammo_nails_real;
-	parm6 = self.ammo_rockets_real;
-	parm7 = self.ammo_cells_real;
+	    parm4 = self.ammo_blaster_real;
+	parm5 = self.ammo_blaster_super_real;
+	parm6 = self.ammo_shotgun_real;
+	parm7 = self.ammo_autogun_real;
 	parm8 = self.weapon;
 	parm9 = self.armortype;
+    parm10 = self.weapons;
+    parm11 = self.ammo_autogun_grenades;
+    parm12 = self.ammo_rpg;
+    parm14 = self.ammo_cells;
+    parm15 = self.ammo_cross_bow;
+    parm16 = self.ammo_tripmines;
 };
 
 void() SetNewParms =
 {
-	parm1 = IT_SHOTGUN | IT_AXE;
+	parm1 = 0;
 	parm2 = 100;
 	parm3 = 0;
-	parm4 = 25;
+	parm4 = 999;
 	parm5 = 0;
 	parm6 = 0;
 	parm7 = 0;
-	parm8 = IT_SHOTGUN;
+	parm8 = W_BLASTER;
 	parm9 = 0;
+	parm10 = W_BLASTER;
+    parm11 = 0;
+    parm12 = 0;
+    parm14 = 0;
+    parm15 = 0;
+    parm16 = 0;
 };
 
 void() DecodeLevelParms =
@@ -107,15 +120,21 @@ void() DecodeLevelParms =
 			SetNewParms ();         // take away all stuff on starting new episode
 	}
 	
-	self.items = parm1;
-	self.health = parm2;
-	self.armorvalue = parm3;
-	self.ammo_shells_real = parm4;
-	self.ammo_nails_real = parm5;
-	self.ammo_rockets_real = parm6;
-	self.ammo_cells_real = parm7;
-	self.weapon = parm8;
-	self.armortype = parm9;
+	self.items                  = parm1;
+	self.health                 = parm2;
+	self.armorvalue             = parm3;
+	self.ammo_blaster_real      = parm4;
+	self.ammo_blaster_super_real= parm5;
+	self.ammo_shotgun_real      = parm6;
+	self.ammo_autogun_real      = parm7;
+	self.weapon                 = parm8;
+	self.armortype              = parm9;
+    self.weapons                = parm10;
+    self.ammo_autogun_grenades  = parm11;
+    self.ammo_rpg               = parm12;
+    self.ammo_cells             = parm14;
+    self.ammo_cross_bow         = parm15;
+    self.ammo_tripmines         = parm16;
 };
 
 /*
@@ -701,10 +720,12 @@ void () trigger_changelevel_parse =
 */
 
 void() set_suicide_frame;
+void() set_broken_frame;
 
 // create a deadbody ent that is removed over time
 void(entity ent) CopyToDeadbody =
 {
+	/* original code*/
 	local entity deadbody;
 
 	deadbody = spawn();
@@ -720,7 +741,10 @@ void(entity ent) CopyToDeadbody =
 	setsize (deadbody, ent.mins, ent.maxs);
 
 	deadbody.think = SUB_Remove;
-	deadbody.nextthink = time + 30;
+	deadbody.nextthink = time + 0; // corps delay time
+	
+	/* cool teleport effect*/
+	spawn_tfog (ent.origin + '0 0 35');
 };
 
 // called by ClientKill and DeadThink
@@ -912,6 +936,7 @@ void() PutClientInServer =
 	self.weaponstate = WS_IDLE;
 #ifdef HALFLIFE
 	self.oldgravity = 1;
+	self.longjump = WM_UNINIT;
 #endif
 #ifdef PHYSICS
 	self.physobj_mass = 90;
@@ -924,21 +949,21 @@ void() PutClientInServer =
 
 	if (deathmatch == 4)
 	{
-		self.ammo_shells_real = 0;
+		self.ammo_blaster_real = 0;
 		if (numberserverinfokey("axe") == 0)
 		{
-			self.ammo_nails_real = 255;
-			self.ammo_shells_real = 255;
-			self.ammo_rockets_real = 255;
-			self.ammo_cells_real = 255;
-			self.items |= IT_NAILGUN
-			| IT_SUPER_NAILGUN
-			| IT_SUPER_SHOTGUN
-			| IT_ROCKET_LAUNCHER
-			| IT_LIGHTNING;
+			self.ammo_blaster_super_real = 255;
+			self.ammo_blaster_real = 255;
+			self.ammo_shotgun_real = 255;
+			self.ammo_autogun_real = 255;
+			self.weapons |= W_AUTOGUN
+			| W_RPG
+			| W_SHOTGUN
+			| W_GAUSS
+			| W_CROSSBOW;
 		}
 		else
-			wtemp = IT_AXE;
+			wtemp = W_BLASTER;
 
 		self.items |= IT_ARMOR3 | IT_INVULNERABILITY;
 		self.items = self.items - (self.items & (IT_ARMOR1 | IT_ARMOR2));
@@ -951,17 +976,17 @@ void() PutClientInServer =
 
 	if (deathmatch == 5)
 	{
-		self.ammo_nails_real = 80;
-		self.ammo_shells_real = 30;
-		self.ammo_rockets_real = 10;
-		self.ammo_cells_real = 30;
-		self.items |= IT_NAILGUN
-			| IT_SUPER_NAILGUN
-			| IT_SUPER_SHOTGUN
-			| IT_ROCKET_LAUNCHER
-			| IT_GRENADE_LAUNCHER
-			| IT_LIGHTNING
-			| IT_ARMOR3
+		self.ammo_blaster_super_real = 80;
+		self.ammo_blaster_real = 30;
+		self.ammo_shotgun_real = 10;
+		self.ammo_autogun_real = 30;
+		self.weapons |= W_AUTOGUN
+			| W_RPG
+			| W_SHOTGUN
+			| W_GAUSS
+			| W_LINK
+			| W_CROSSBOW;
+		self.items |= IT_ARMOR3
 			| IT_INVULNERABILITY;
 		self.items = self.items - (self.items & (IT_ARMOR1 | IT_ARMOR2));
 		self.armorvalue = 200;
@@ -993,27 +1018,41 @@ void() PutClientInServer =
 	setmodel (self, "progs/eyes.mdl");
 	modelindex_eyes = self.modelindex;
 
-	setmodel (self, "progs/player.mdl");
+	setmodel (self, "progs/kkelad.md2");
 	modelindex_player = self.modelindex;
 
 	setsize (self, VEC_HULL_MIN, VEC_HULL_MAX);
 #ifdef HALFLIFE
 	self.crouchflags = #CROUCH_OFF;
-	stuffcmd (self, "alias +crouch \"impulse 102\"\nalias -crouch \"impulse 103\"\n");
+	stuffcmd (self, "alias +crouch \"impulse 202\"\nalias -crouch \"impulse 203\"\n");
 	stuffcmd (self, "alias use \"impulse 104\"\n");
-	
 	stuffcmd (self, "+crouch\n");		// hackish, but palyers that spawn in tunnels and such need to be crouching
 	stuffcmd (self, "-crouch\n");
 #endif
-	
-	self.view_ofs = '0 0 22';
+	// crouch code // TODO Refactor coz taken from weapon_impulses
+			setsize(self, VEC_HULL_MIN, VEC_HULL_CROUCH);
+			self.crouchflags = #CROUCH_ON;
+			self.view_ofs_z = 35; 
+	// crouch code
+			// Probably redundant part
+			// make sure we can stand
+			tracebox(self.origin, VEC_HULL_MIN, VEC_HULL_MAX, self.origin, FALSE, self);
+			if (!trace_startsolid)
+			{
+				self.crouchflags = #CROUCH_OFF;
+				self.view_ofs_z = 70;
+				//self.view_ofs = PL_VIEW_OFS;
+				setsize (self, VEC_HULL_MIN, VEC_HULL_MAX);
+			}
+	// crouch code
+	self.view_ofs = '0 0 70';
 
 // Mod - Xian (May.20.97)
 // Bug where player would have velocity from their last kill
 
 	self.velocity = '0 0 0';
 
-	player_stand1 ();
+	player_anim_stand1 ();
 	
 	makevectors(self.angles);
 	spawn_tfog (self.origin + v_forward*20);
@@ -1278,7 +1317,18 @@ void() PlayerJump =
 	}
 #endif
 	if (!(self.flags & FL_ONGROUND))
+	{
+		if (self.longjump == WEAPON_SHOTGUN && self.longjumpused != WEAPON_SHOTGUN && self.crouchflags == #CROUCH_ON)
+		{
+			self.velocity = aim(self, 1000) * 600 + '0 0 400';
+			self.longjumpused = WEAPON_SHOTGUN;
+		}
 		return;
+	}
+	else
+	{
+		self.longjumpused = WM_UNINIT;
+	}
 
 	if ( !(self.flags & FL_JUMPRELEASED) )
 		return;         // don't pogo stick
@@ -1287,13 +1337,14 @@ void() PlayerJump =
 	self.button2 = 0;
 
 // player jumping sound
-	sound (self, CHAN_BODY, "player/plyrjmp8.wav", 1, ATTN_NORM);
+	precache_sound("sounds/player/kkelad_jump.wav");
+	sound (self, CHAN_BODY, "sounds/player/kkelad_jump.wav", 0.5, ATTN_NORM);
 #ifdef NETQUAKE
 	self.flags = self.flags - FL_ONGROUND;
 	self.velocity_z = self.velocity_z + 270;
 #endif
 #ifdef HALFLIFE
-	self.velocity_z = self.velocity_z + (50-lad);
+	self.velocity_z = self.velocity_z + (25-lad);	// WaaaghSaveOriginal: self.velocity_z = self.velocity_z + (50-lad);
 	//self.velocity_z = self.velocity_z + 50;
 #endif
 };
@@ -1551,7 +1602,8 @@ Called every frame before physics are run
 */
 void() PlayerPreThink =
 {
-
+    if (BotPreFrame()) // FrikBot
+	    return;
 	if (intermission_running)
 	{
 		IntermissionThink ();   // otherwise a button could be missed between
@@ -1575,13 +1627,22 @@ void() PlayerPreThink =
 			if (!trace_startsolid)
 			{
 				self.crouchflags = #CROUCH_OFF;
-				self.view_ofs_z = 22;
+				self.view_ofs_z = 70;
 				//self.view_ofs = PL_VIEW_OFS;
 				setsize (self, VEC_HULL_MIN, VEC_HULL_MAX);
 			}
-			
+			else 
+			{
+				kkelad_anim_crouch();
+			}
 		}
 	//}
+
+	// crouch on
+	if ( self.crouchflags & #CROUCH_ON ) {
+		kkelad_anim_crouch();
+	}
+
 #endif
 
 	makevectors (self.v_angle);             // is this still used
@@ -1622,15 +1683,18 @@ void() PlayerPreThink =
 		return;
 	}
 	
-	if (self.deadflag == DEAD_DYING)
+	if (self.deadflag == DEAD_DYING) {
+		set_broken_frame();
 		return; // dying, so do nothing
+	}
+
 
 	if (self.button2)
 		PlayerJump ();
 	else
 		self.flags = self.flags | FL_JUMPRELEASED;
 
-	if(time > self.attack_finished && self.currentammo == 0 && self.weapon != IT_AXE)
+	if(time > self.attack_finished && self.currentammo == 0 && self.weapon != W_BLASTER)
 	{
 		W_WeaponSwitch (W_BestWeapon ());
 	}
@@ -1754,7 +1818,7 @@ void() CheckPowerups =
 			self.items = self.items - IT_QUAD;
 			if (deathmatch == 4)
 			{
-				self.ammo_cells_real = 255;
+				self.ammo_autogun_real = 255;
 				W_UpdateAmmoCounts(self);
 				self.armorvalue = 1;
 				self.armortype = 0.8;
@@ -1812,6 +1876,8 @@ Called every frame after physics are run
 */
 void() PlayerPostThink =
 {
+    if (BotPostFrame()) // FrikBot
+	    return;
 //dprint ("post think\n");
 	if (intermission_running)
 		return;
@@ -1860,6 +1926,7 @@ called when a player connects to a server
 void () relandmark_touch;
 void() ClientConnect =
 {
+    ClientInRankings(); // FrikBot
 #ifdef HALFLIFE
 	local entity relandmark, oself;
 	oself = self;
@@ -1892,6 +1959,7 @@ called when a player disconnects from a server
 */
 void() ClientDisconnect =
 {
+	ClientDisconnected(); // FrikBot
 	// let everyone else know
 	bprint4 (PRINT_HIGH, self.netname, " left the game with ", ftos(self.frags), " frags\n");
 	sound (self, CHAN_BODY, "player/tornoff2.wav", 1, ATTN_NONE);
@@ -1942,6 +2010,10 @@ void(entity targ, entity attacker, INTEGER mod) ClientObituary =
 		targ.frags = targ.frags - 1;
 		logfrag(targ, targ)
 	}
-};
 
- 
+	local float file;
+	file = fopen ("frags_report.txt", 2);
+	fputs (file,  strcat(attacker.netname, " -> ", targ.netname));
+	fputs (file, "\n");
+	fclose( file );
+};

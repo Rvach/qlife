@@ -42,3 +42,15 @@ not fully supported yet)
 	/progs/v_*
 	/progs/WORLD
 	/maps/*.bsp
+
+-----------------------------------------------------------
+H L A G
+-----------------------------------------------------------
+HLAG is an attempt to reimplement Half-Life AdrenalineGamer
+mod using FTEQW, so modifications done since the fork was 
+made pursuited other aims than `quakelife`.
+## Assets
+All the `.md2` and `.png` assets which resides in progs/
+folders are made by me (Rv4Flyver) as a rough replacement
+for required ones. They can be used for free without any
+restrictions, though any credits are appreciated :)
