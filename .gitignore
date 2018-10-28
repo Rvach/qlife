@@ -1,8 +1,10 @@
 gfx/
 maps/*.bsp
 ql_src/ftegcc.log
+ql_src/win64-fteqcc.exe
 saves/
 sounds/
+csprogs.lno
 progs.dat
 progs.lno
 *.cfg
