@@ -14,7 +14,7 @@ restrictions, though any credits are appreciated :)
 1) Download `AfterQuake`: http://goo.gl/qppd6E
 2) Extract `AfterQuake`
 3) Create `hlag` folder inside unpacked folder
-4) Clone or download this repo: https://github.com/rv4Flyver/hlag/archive/master.zip
+4) Clone or download this repo: https://github.com/rv4Flyver/rv4hlag/archive/master.zip
 5) Drop content of this repository inside `hlag` folder (download )
 6) (optional) Copy `half-life` maps into `hlag/maps/` folder
 8) (optional) Copy `halflife.wad` into `hlag/` folder
